@@ -1,0 +1,1 @@
+from routers.private import router as private
