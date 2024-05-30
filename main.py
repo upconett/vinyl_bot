@@ -1,15 +1,15 @@
-import asyncio, os
+import asyncio
 
-from create_bot import bot, dp
+from create_bot import bot, dp, logger
 from routers import private
 
 
 async def onstartup():
-    print('Bot Online!')
+    logger.info('Bot Online!')
 
 
 async def onshutdown():
-    print('Goodbye...')
+    logger.info('Goodbye...')
 
 
 async def main():
