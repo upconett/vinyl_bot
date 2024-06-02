@@ -1,7 +1,7 @@
 import asyncio
 
 from create_bot import bot, dp, logger
-from routers import private
+from routers import private, subscription, vinyl
 
 
 async def onstartup():
@@ -16,7 +16,11 @@ async def main():
     dp.startup.register(onstartup)
     dp.shutdown.register(onshutdown)
 
-    dp.include_routers(private)
+    dp.include_routers(
+        private,
+        subscription,
+        vinyl
+    )
 
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)

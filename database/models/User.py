@@ -1,10 +1,14 @@
-from multipledispatch import dispatch
+import enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import BIGINT
 from aiogram.types import User as AIOgramUser
 
 from .BaseModel import BaseModel 
 from .Subscription import Subscription
+
+
+class LangTypes(enum.Enum):
+    RU = 'ru'
+    EN = 'en'
 
 
 class User(BaseModel):
@@ -16,6 +20,8 @@ class User(BaseModel):
     first_name: Mapped[str | None]
     last_name: Mapped[str | None]
 
+    language: Mapped[LangTypes]
+
     subscription: Mapped[Subscription] = relationship(cascade='all, delete-orphan')
 
 
@@ -24,6 +30,7 @@ class User(BaseModel):
         self.username = user.username
         self.first_name = user.first_name
         self.last_name = user.last_name
+        self.language = LangTypes.RU if user.language_code == 'ru' else LangTypes.EN
 
 
     def update(self, user: AIOgramUser) -> None:

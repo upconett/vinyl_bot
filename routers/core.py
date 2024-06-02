@@ -4,12 +4,12 @@ from aiogram.filters import CommandStart
 from aiogram.types import *
 
 from create_bot import logger
-from keyboards import private as keyboards
+from keyboards import core as keyboards
 
-from logic.private import *
+from logic.core import *
 
 
-router = Router(name='private')
+router = Router(name='core')
 
 
 @router.message(CommandStart())
@@ -44,48 +44,60 @@ async def query_start(query: CallbackQuery):
 
 
 @router.callback_query(F.data == 'profile')
-async def query_subscription_rate(query: CallbackQuery):
+async def query_profile(query: CallbackQuery):
     user = query.from_user
     update_user(user)
+
+    pd = get_profile_data(user)
     await query.message.edit_text(
-        text='Ваш профиль',
+        text=(
+            'Профиль\n' +
+            f'Подписка {"✅" if pd.subscribed else "❌"}\n' +
+            (f"Истекает: {pd.expires_at}\n" if pd.subscribed else "") + 
+            '\n' +
+            f'Бесплатных пластинок: {pd.free_vinyl}\n' +
+            f'Бесплатных альбомов: {pd.free_albums}\n'
+        ),
         reply_markup=keyboards.profile()
     )
     await query.answer()
     logger.info(f'@{user.username} called profile')
 
 
-@router.callback_query(F.data == 'subscription')
-async def query_subscription_rate(query: CallbackQuery):
+@router.callback_query(F.data == 'language')
+async def query_language(query: CallbackQuery):
     user = query.from_user
     update_user(user)
+
     await query.message.edit_text(
-        text='Выберите тариф',
-        reply_markup=keyboards.subscription_rate()
+        text='Выберите язык',
+        reply_markup=keyboards.language()
     )
     await query.answer()
-    logger.info(f'@{user.username} called subscription')
+    logger.info(f'@{user.username} called language')
 
 
-@router.callback_query(F.data.startswith('subscription_rate'))
-async def query_subscription_rate(query: CallbackQuery):
+@router.callback_query(F.data.startswith('language_'))
+async def query_language_set(query: CallbackQuery):
     user = query.from_user
     update_user(user)
-    await query.message.edit_text(
-        text='Выберите метод оплаты',
-        reply_markup=keyboards.subscription_payment_method()
-    )
-    await query.answer()
-    logger.info(f'@{user.username} called subscription_rate_*')
 
+    
+    lang = set_language(user, query.data.replace('language_', ''))
 
-@router.callback_query(F.data.startswith('subscription_payment_method'))
-async def query_subscription_rate(query: CallbackQuery):
-    user = query.from_user
-    update_user(user)
+    pd = get_profile_data(user)
     await query.message.edit_text(
-        text='Перейдите по ссылке чтобы оплатить',
-        reply_markup=keyboards.subscription_payment()
+        text=(
+            'Профиль\n' +
+            f'Подписка {"✅" if pd.subscribed else "❌"}\n' +
+            (f"Истекает: {pd.expires_at}\n" if pd.subscribed else "") + 
+            '\n' +
+            f'Бесплатных пластинок: {pd.free_vinyl}\n' +
+            f'Бесплатных альбомов: {pd.free_albums}\n'
+        ),
+        reply_markup=keyboards.profile()
     )
+
     await query.answer()
-    logger.info(f'@{user.username} called subscription_payment_method_*')
+    logger.info(f'@{user.username} set language to "{lang.value.upper()}"')
+    
