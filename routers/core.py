@@ -1,6 +1,7 @@
 from aiogram.dispatcher.router import Router
 from aiogram import F
 from aiogram.filters import CommandStart
+from aiogram.fsm.context import FSMContext
 from aiogram.types import *
 
 from create_bot import logger
@@ -13,7 +14,9 @@ router = Router(name='core')
 
 
 @router.message(CommandStart())
-async def message_start(message: Message):
+async def message_start(message: Message, state: FSMContext):
+    state.clear()
+
     user = message.from_user
     update_user(user)
 

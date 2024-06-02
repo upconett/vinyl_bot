@@ -10,7 +10,7 @@ try:
 
     token: str = data['token']
 
-    logging.disable_aiogram()
+    # logging.disable_aiogram()
     logging.set_format()
     logger = logging.get_logger(data['logfile'])
     
