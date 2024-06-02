@@ -1,3 +1,3 @@
-from models.BaseModel import Base
-from models.User import User
-from models.Subscription import Subscription
+from database.models.BaseModel import Base
+from database.models.User import User
+from database.models.Subscription import Subscription

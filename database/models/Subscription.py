@@ -15,6 +15,7 @@ class SubType(enum.Enum):
 class Subscription(BaseModel):
     __tablename__ = 'subscriptions'
 
+    id: Mapped[int] = mapped_column(unique=True, primary_key=True, autoincrement=True)
     type: Mapped[SubType]
     expires_at: Mapped[datetime | None]
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'))

@@ -1,9 +1,8 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
 
-from .models import Base, User, Subscription
-from .models.Subscription import SubType
+from database.models import Base
 
+engine = create_engine("sqlite:///location_test.db", echo=True)
 
-engine = create_engine("sqlite:///:memory:", echo=True)
-
+if not engine.dialect.has_table(engine.connect(), 'users'):
+    Base.metadata.create_all(engine)
