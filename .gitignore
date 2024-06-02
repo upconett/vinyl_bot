@@ -3,3 +3,8 @@ __pycache__
 config.yaml
 *.log
 *.db
+.idea
+*.jpeg
+*.mp3
+*.mp4
+template_images.json

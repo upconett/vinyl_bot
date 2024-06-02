@@ -22,3 +22,39 @@ def create_vinyl_template() -> InlineKeyboardMarkup:
             [btn_back]
         ]
     )
+
+
+def create_vinyl_noise() -> InlineKeyboardMarkup:
+    btn_yes = InlineKeyboardButton(text='Да', callback_data='create_vinyl_noise_1')
+    btn_no = InlineKeyboardButton(text='Нет', callback_data='create_vinyl_noise_0')
+    btn_back = InlineKeyboardButton(text='Назад', callback_data='start')
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [btn_yes, btn_no],
+            [btn_back]
+        ]
+    )
+
+
+def create_vinyl_speed() -> InlineKeyboardMarkup:
+    btn_8rpm = InlineKeyboardButton(text='8RMP', callback_data='create_vinyl_speed_8RPM')
+    btn_full = InlineKeyboardButton(text='1 Оборот', callback_data='create_vinyl_speed_full')
+    btn_back = InlineKeyboardButton(text='Назад', callback_data='start')
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [btn_8rpm],
+            [btn_full],
+            [btn_back]
+        ]
+    )
+
+
+def create_vinyl_offset() -> InlineKeyboardMarkup:
+    btn_start = InlineKeyboardButton(text='С самого начала', callback_data='create_vinyl_offset_start')
+    btn_back = InlineKeyboardButton(text='Назад', callback_data='start')
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [btn_start],
+            [btn_back]
+        ]
+    )
