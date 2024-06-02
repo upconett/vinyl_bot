@@ -4,7 +4,7 @@ from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import *
 
-from create_bot import logger
+from create_bot import logger, bot
 from keyboards import core as keyboards
 
 from logic.core import *
@@ -15,10 +15,18 @@ router = Router(name='core')
 
 @router.message(CommandStart())
 async def message_start(message: Message, state: FSMContext):
-    state.clear()
-
     user = message.from_user
     update_user(user)
+
+    data = await state.get_data()
+    for key in data.keys():
+        try: 
+            if 'id' in key: 
+                await bot.delete_message(user.id, data[key])
+        except: pass
+    await state.set_data({})
+    await state.clear()
+
 
     await message.answer(
         text=(f'Привет, {user.first_name}\n'
@@ -32,17 +40,32 @@ async def message_start(message: Message, state: FSMContext):
 
 
 @router.callback_query(F.data == 'start')
-async def query_start(query: CallbackQuery):
+async def query_start(query: CallbackQuery, state: FSMContext):
     user = query.from_user
     update_user(user)
-    await query.message.edit_text(
+
+    data = await state.get_data()
+    for key in data.keys():
+        try:
+            if 'id' in key:
+                await bot.delete_message(user.id, data[key])
+        except: pass
+
+    try:
+        await query.message.delete()
+    except: pass
+    await query.message.answer(
         text=(f'Привет, {user.first_name}\n'
-        'В этом боте ты можешь создать '
-        'визуализацию музыки в виде кружка с '
-        'пластинкой или вставить свое изображение в альбом!'
-        ),
+              'В этом боте ты можешь создать '
+              'визуализацию музыки в виде кружка с '
+              'пластинкой или вставить свое изображение в альбом!'
+              ),
         reply_markup=keyboards.start()
     )
+
+    await state.set_data({})
+    await state.clear()
+
     logger.info(f'@{user.username} called start')
 
 

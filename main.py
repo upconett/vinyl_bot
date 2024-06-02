@@ -1,7 +1,7 @@
 import asyncio
 
 from create_bot import bot, dp, logger
-from routers import core, subscription, vinyl, admin
+from routers import core, subscription, vinyl, album, admin
 
 
 async def onstartup():
@@ -20,6 +20,7 @@ async def main():
         core,
         subscription,
         vinyl,
+        album,
         admin
     )
 
