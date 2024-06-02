@@ -84,6 +84,8 @@ async def query_language_set(query: CallbackQuery):
 
     
     lang = set_language(user, query.data.replace('language_', ''))
+    if lang == LangTypes.RU: answer_text = "Язык установлен 🇷🇺"
+    else: answer_text = "Language set 🇺🇸"
 
     pd = get_profile_data(user)
     await query.message.edit_text(
@@ -98,6 +100,6 @@ async def query_language_set(query: CallbackQuery):
         reply_markup=keyboards.profile()
     )
 
-    await query.answer()
+    await query.answer(answer_text)
     logger.info(f'@{user.username} set language to "{lang.value.upper()}"')
     
