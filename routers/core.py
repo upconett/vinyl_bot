@@ -105,4 +105,3 @@ async def query_language_set(query: CallbackQuery):
 
     await query.answer(answer_text)
     logger.info(f'@{user.username} set language to "{lang.value.upper()}"')
-    

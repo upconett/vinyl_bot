@@ -9,6 +9,7 @@ try:
     data = config.read_data()
 
     token: str = data['token']
+    admins: list = data['admins']
 
     # logging.disable_aiogram()
     logging.set_format()
