@@ -45,7 +45,7 @@ def set_language(user: AIOgramUser, lang: str) -> LangTypes:
         return db_user.language
 
 
-def get_language(user: AIOgramUser) -> LangTypes:
+async def get_language(user: AIOgramUser) -> LangTypes:
     with Session(engine) as s:
         return s.get(User, {'id': user.id}).language
         
