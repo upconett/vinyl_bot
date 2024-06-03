@@ -59,7 +59,9 @@ async def query_wait_for_template(query: CallbackQuery, state: FSMContext):
 
     data['template'] = tmp
 
-    await query.message.edit_text()
+    await query.message.edit_text(
+        
+    )
 
 
 

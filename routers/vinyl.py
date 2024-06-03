@@ -7,6 +7,8 @@ from aiogram.fsm.state import State, StatesGroup
 import json
 
 from create_bot import logger, bot
+from messages import vinyl as messages
+from messages import core as messages_core
 from keyboards import vinyl as keyboards
 from keyboards import core as keyboards_core
 from utility.template_images import get_image
@@ -30,11 +32,12 @@ class CreationStates(StatesGroup):
 async def query_create_vinyl(query: CallbackQuery, state: FSMContext):
     user = query.from_user
     update_user(user)
+    lang = await get_language(user)
 
     await state.set_state(CreationStates.wait_for_audio)
 
     query_message = await query.message.edit_text(
-        text='Пришли мне аудио',
+        text=await messages.create_vinyl(lang),
         reply_markup=keyboards.create_vinyl()
     )
 
@@ -51,12 +54,13 @@ async def message_wait_for_audio(message: Message, state: FSMContext):
     if not any([message.audio, message.voice]): return
     user = message.from_user
     update_user(user)
+    lang = await get_language(user)
     data = await state.get_data()
 
     if message.audio: file = message.audio
     elif message.voice: file = message.voice
     if file.duration < 3:
-        await message.answer('Аудио должно длится минимум 3 секунды!')
+        await message.answer(await messages.audio_fail(lang))
         return
     file_id = file.file_id
     await bot.download(file=file_id, destination=f'./audio/{file_id}.mp3')
@@ -68,24 +72,25 @@ async def message_wait_for_audio(message: Message, state: FSMContext):
     if image_id:
         photo_message = await message.answer_photo(photo=image_id)
     else:
-        photo_message = await message.answer('Картинка шаблонов не выставлена!')
+        photo_message = await message.answer(await messages.template_image_warning(lang))
     data['photo_id'] = photo_message.message_id
 
     await message.answer(
-        text="Супер! Теперь выбери шаблон пластинки",
+        text=await messages.create_vinyl_template(lang),
         reply_markup=keyboards.create_vinyl_template()
     )
      
     await state.set_data(data)
 
     await state.set_state(CreationStates.wait_for_template)
-    logger.info(f'@{user.username} sent audio for vinyl, saved "{file_id}.mp3"')
+    logger.info(f'@{user.username} sent audio for vinyl, saved {file_id}.mp3')
 
 
 @router.callback_query(StateFilter(CreationStates.wait_for_template), F.data.startswith('create_vinyl_template_'))
 async def query_wait_for_template(query: CallbackQuery, state: FSMContext):
     user = query.from_user
     update_user(user)
+    lang = await get_language(user)
     data = await state.get_data()
 
     await bot.delete_message(user.id, data['photo_id'])
@@ -95,7 +100,7 @@ async def query_wait_for_template(query: CallbackQuery, state: FSMContext):
     data['template'] = tmp
 
     query_message = await query.message.edit_text(
-        text=f'Выбран шаблон №{tmp}\nПришли мне картинку или видео на обложку',
+        text=await messages.create_vinyl_cover(lang, tmp),
         reply_markup=keyboards.create_vinyl()
     )
     data['query_message_id'] = query_message.message_id
@@ -112,10 +117,11 @@ async def message_wait_for_cover(message: Message, state: FSMContext):
     if not any([message.photo, message.video, message.document]): return
     user = message.from_user
     update_user(user)
+    lang = await get_language(user)
     data = await state.get_data()
 
     if message.document: 
-        await message.answer('Пожалуйста, пришлите фото со сжатием или видео')
+        await message.answer(await messages.cover_failure(lang))
         logger.info(f'@{user.username} sent document and got rejected')
         return
 
@@ -125,21 +131,21 @@ async def message_wait_for_cover(message: Message, state: FSMContext):
         file_id = message.photo[-1].file_id
         await bot.download(file=file_id, destination=f'./cover/{file_id}.jpeg')
         data['cover_file'] = ('./cover/' + file_id + '.jpeg')
-        cover_type = 'фото'
+        cover_type = 1
     elif message.video:
         file_id = message.video.file_id
         await bot.download(file=file_id, destination=f'./cover/{file_id}.mp4')
         data['cover_file'] = ('./cover/' + file_id + '.mp4')
-        cover_type = 'видео'
+        cover_type = 2
 
     await bot.delete_message(user.id, data['query_message_id'])
 
     await message.answer(
-        text=f'Получил {cover_type}-обложку\nДобавить шум винила на фон?',
+        text=await messages.create_vinyl_noise(lang, cover_type),
         reply_markup=keyboards.create_vinyl_noise()
     )
-    
-    cover_type = 'photo' if cover_type == 'фото' else 'video'
+
+    cover_type = 'photo' if cover_type == 1 else 'video'
 
     await state.set_data(data)
 
@@ -151,6 +157,7 @@ async def message_wait_for_cover(message: Message, state: FSMContext):
 async def query_wait_for_noise(query: CallbackQuery, state: FSMContext):
     user = query.from_user
     update_user(user)
+    lang = await get_language(user)
     data = await state.get_data()
 
     # Получаем bool значение шума из callback_query.data
@@ -159,7 +166,7 @@ async def query_wait_for_noise(query: CallbackQuery, state: FSMContext):
     data['noise'] = noise
 
     await query.message.edit_text(
-        text=f'Добавляем шум: {"Да" if noise else "Нет"}\nВыбери скорость вращения диска',
+        text=await messages.create_vinyl_speed(lang, noise),
         reply_markup=keyboards.create_vinyl_speed()
     )
 
@@ -167,13 +174,14 @@ async def query_wait_for_noise(query: CallbackQuery, state: FSMContext):
 
     await state.set_data(data)
     await state.set_state(CreationStates.wait_for_speed)
-    logger.info(f'@{user.username} choose {"not" if not noise else ""}to add noise')
+    logger.info(f'@{user.username} choose {"not " if not noise else ""}to add noise')
 
 
 @router.callback_query(StateFilter(CreationStates.wait_for_speed), F.data.startswith('create_vinyl_speed_'))
 async def query_wait_for_speed(query: CallbackQuery, state: FSMContext):
     user = query.from_user
     update_user(user)
+    lang = await get_language(user)
     data = await state.get_data()
 
     speed = query.data.replace('create_vinyl_speed_', '')
@@ -181,11 +189,7 @@ async def query_wait_for_speed(query: CallbackQuery, state: FSMContext):
     data['speed'] = speed
 
     query_message = await query.message.edit_text(
-        text=(
-            f'Скорость вращения: {speed}\n'
-            'Введи время начала трека в формате:\n'
-            '02:30 (две минуты 30 секунд)'
-        ),
+        text=await messages.create_vinyl_offset(lang, speed),
         reply_markup=keyboards.create_vinyl_offset()
     )
     data['query_message_id'] = query_message.message_id
@@ -201,6 +205,7 @@ async def query_wait_for_speed(query: CallbackQuery, state: FSMContext):
 async def query_end(query: CallbackQuery, state: FSMContext):
     user = query.from_user
     update_user(user)
+    lang = await get_language(user)
     data = await state.get_data()
 
     data['offset'] = '00:00'
@@ -217,12 +222,8 @@ async def query_end(query: CallbackQuery, state: FSMContext):
         parse_mode='MarkdownV2'
     )
     await query.message.answer(
-        text=(f'Привет, {user.first_name}\n'
-        'В этом боте ты можешь создать '
-        'визуализацию музыки в виде кружка с '
-        'пластинкой или вставить свое изображение в альбом!'
-        ),
-        reply_markup=keyboards_core.start()
+        text=await messages_core.start(lang, user),
+        reply_markup=await keyboards_core.start(lang)
     )
 
 
@@ -234,6 +235,7 @@ async def query_end(query: CallbackQuery, state: FSMContext):
 async def message_end(message: Message, state: FSMContext):
     user = message.from_user
     update_user(user)
+    lang = await get_language(user)
     data = await state.get_data()
 
     if len(message.text) == 5 and message.text[2] == ':' and \
@@ -257,12 +259,8 @@ async def message_end(message: Message, state: FSMContext):
         parse_mode='MarkdownV2'
     )
     await message.answer(
-        text=(f'Привет, {user.first_name}\n'
-        'В этом боте ты можешь создать '
-        'визуализацию музыки в виде кружка с '
-        'пластинкой или вставить свое изображение в альбом!'
-        ),
-        reply_markup=keyboards_core.start()
+        text=await messages_core.start(lang, user),
+        reply_markup=await keyboards_core.start(lang)
     )
 
     await state.clear()

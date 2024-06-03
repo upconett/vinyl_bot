@@ -5,6 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import *
 
 from create_bot import logger, bot
+from messages import core as messages
 from keyboards import core as keyboards
 
 from logic.core import *
@@ -17,6 +18,7 @@ router = Router(name='core')
 async def message_start(message: Message, state: FSMContext):
     user = message.from_user
     update_user(user)
+    lang = await get_language(user)
 
     data = await state.get_data()
     for key in data.keys():
@@ -29,12 +31,8 @@ async def message_start(message: Message, state: FSMContext):
 
 
     await message.answer(
-        text=(f'Привет, {user.first_name}\n'
-        'В этом боте ты можешь создать '
-        'визуализацию музыки в виде кружка с '
-        'пластинкой или вставить свое изображение в альбом!'
-        ),
-        reply_markup=keyboards.start()
+        text=await messages.start(lang, user),
+        reply_markup=await keyboards.start(lang)
     )
     logger.info(f'@{user.username} started bot')
 
@@ -43,6 +41,7 @@ async def message_start(message: Message, state: FSMContext):
 async def query_start(query: CallbackQuery, state: FSMContext):
     user = query.from_user
     update_user(user)
+    lang = await get_language(user)
 
     data = await state.get_data()
     for key in data.keys():
@@ -55,12 +54,8 @@ async def query_start(query: CallbackQuery, state: FSMContext):
         await query.message.delete()
     except: pass
     await query.message.answer(
-        text=(f'Привет, {user.first_name}\n'
-              'В этом боте ты можешь создать '
-              'визуализацию музыки в виде кружка с '
-              'пластинкой или вставить свое изображение в альбом!'
-              ),
-        reply_markup=keyboards.start()
+        text=await messages.start(lang, user),
+        reply_markup=await keyboards.start(lang)
     )
 
     await state.set_data({})
@@ -73,18 +68,12 @@ async def query_start(query: CallbackQuery, state: FSMContext):
 async def query_profile(query: CallbackQuery):
     user = query.from_user
     update_user(user)
+    lang = await get_language(user)
 
     pd = get_profile_data(user)
     await query.message.edit_text(
-        text=(
-            'Профиль\n' +
-            f'Подписка {"✅" if pd.subscribed else "❌"}\n' +
-            (f"Истекает: {pd.expires_at}\n" if pd.subscribed else "") + 
-            '\n' +
-            f'Бесплатных пластинок: {pd.free_vinyl}\n' +
-            f'Бесплатных альбомов: {pd.free_albums}\n'
-        ),
-        reply_markup=keyboards.profile()
+        text=await messages.profile(lang, pd),
+        reply_markup=await keyboards.profile(lang)
     )
     await query.answer()
     logger.info(f'@{user.username} called profile')
@@ -94,10 +83,11 @@ async def query_profile(query: CallbackQuery):
 async def query_language(query: CallbackQuery):
     user = query.from_user
     update_user(user)
+    lang = await get_language(user)
 
     await query.message.edit_text(
-        text='Выберите язык',
-        reply_markup=keyboards.language()
+        text=await messages.language(lang),
+        reply_markup=await keyboards.language()
     )
     await query.answer()
     logger.info(f'@{user.username} called language')
@@ -115,15 +105,8 @@ async def query_language_set(query: CallbackQuery):
 
     pd = get_profile_data(user)
     await query.message.edit_text(
-        text=(
-            'Профиль\n' +
-            f'Подписка {"✅" if pd.subscribed else "❌"}\n' +
-            (f"Истекает: {pd.expires_at}\n" if pd.subscribed else "") + 
-            '\n' +
-            f'Бесплатных пластинок: {pd.free_vinyl}\n' +
-            f'Бесплатных альбомов: {pd.free_albums}\n'
-        ),
-        reply_markup=keyboards.profile()
+        text=await messages.profile(lang, pd),
+        reply_markup=await keyboards.profile(lang)
     )
 
     await query.answer(answer_text)

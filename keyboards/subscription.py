@@ -1,11 +1,19 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import User as AIOgramUser
+
+from database.models.User import LangTypes
 
 
-def subscription_rate() -> InlineKeyboardMarkup:
-    btn_subscription_rate_month = InlineKeyboardButton(text='Месяц', callback_data='subscription_rate_month')
-    btn_subscription_rate_3months = InlineKeyboardButton(text='3 Месяца', callback_data='subscription_rate_3months')
-    btn_subscription_rate_forever = InlineKeyboardButton(text='Бессрочно', callback_data='subscription_rate_forever')
-    btn_back = InlineKeyboardButton(text='Назад', callback_data='profile')
+async def subscription_rate(lang: LangTypes) -> InlineKeyboardMarkup:
+    match lang:
+        case LangTypes.RU:
+            texts = ['1 Месяц', '6 Месяцев', '12 Месяцев', 'Назад']
+        case LangTypes.EN:
+            texts = ['1 Month', '6 Months', '12 Months', 'Back']
+    btn_subscription_rate_month = InlineKeyboardButton(text=texts[0], callback_data='subscription_rate_1')
+    btn_subscription_rate_3months = InlineKeyboardButton(text=texts[1], callback_data='subscription_rate_6')
+    btn_subscription_rate_forever = InlineKeyboardButton(text=texts[2], callback_data='subscription_rate_12')
+    btn_back = InlineKeyboardButton(text=texts[3], callback_data='profile')
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [btn_subscription_rate_month],
@@ -16,12 +24,15 @@ def subscription_rate() -> InlineKeyboardMarkup:
     )
     
 
-def subscription_payment_method() -> InlineKeyboardMarkup:
+async def subscription_payment_method(lang: LangTypes) -> InlineKeyboardMarkup:
+    match lang:
+        case LangTypes.RU: text_back = 'Назад'
+        case LangTypes.EN: text_back = 'Back'
     btn_subscription_payment_method_yoomoney = InlineKeyboardButton(
-        text='Yoomoney', callback_data='subscription_payment_method_yoomoney')
+        text='YooMoney', callback_data='subscription_payment_method_yoomoney')
     btn_subscription_payment_method_paypal = InlineKeyboardButton(
         text='PayPal', callback_data='subscription_payment_method_paypal')
-    btn_back = InlineKeyboardButton(text='Назад', callback_data='subscription')
+    btn_back = InlineKeyboardButton(text=text_back, callback_data='subscription')
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [btn_subscription_payment_method_yoomoney],
@@ -31,11 +42,16 @@ def subscription_payment_method() -> InlineKeyboardMarkup:
     )
 
 
-def subscription_payment() -> InlineKeyboardMarkup:
+async def subscription_payment(lang: LangTypes, user: AIOgramUser) -> InlineKeyboardMarkup:
+    match lang:
+        case LangTypes.RU:
+            texts = ['Оплатить', 'Назад']
+        case LangTypes.EN:
+            texts = ['Pay', 'Back']
     btn_subscription_payment_buy = InlineKeyboardButton(
-        text='Оплатить', url='sublimit.ru'
+        text=texts[0], url='sublimit.ru'
     )
-    btn_back = InlineKeyboardButton(text='Назад', callback_data='subscription')
+    btn_back = InlineKeyboardButton(text=texts[1], callback_data='subscription')
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [btn_subscription_payment_buy],
