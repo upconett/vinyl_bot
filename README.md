@@ -1,5 +1,11 @@
-Create `config.yaml` with this content:
+Создайте `config.yaml`, запишите туда:
 ```yaml
-token: '7989854:your-bot-token'
-logfile: 'logfile_name.log'
+token: 'токен-вашего-бота'
+logfile: 'название-файла-для-логов.log'
+bot_url: 'https://t.me/username-вашего-бота'
+yookassa_token: 'токен-для-подключения-юкасса'
+
+admins:
+  - тг-айди-админа (цифры)
+  - тг-айди-другого-админа
 ```

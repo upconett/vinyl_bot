@@ -8,8 +8,8 @@ from .BaseModel import BaseModel
 
 class SubType(enum.Enum):
     MONTH_1 = 'MONTH 1'
-    MONTH_3 = 'MONTH 3'
-    UNLIMITED = 'UNLIMITED'
+    MONTH_6 = 'MONTH 6'
+    MONTH_12 = 'MONTH 12'
 
 
 class Subscription(BaseModel):
@@ -23,14 +23,11 @@ class Subscription(BaseModel):
     def __init__(self, type: SubType):
         match type:
             case SubType.MONTH_1:
-                expires_at = datetime.now() + timedelta(days=30)
-                print('expires_at', expires_at.date())
-            case SubType.MONTH_3:
-                expires_at = datetime.now() + timedelta(days=90)
-                print('expires_at', expires_at.date())
-            case SubType.UNLIMITED:
-                expires_at = None
-                print('Never expires')
+                expires_at = datetime.now() + timedelta(days=31)
+            case SubType.MONTH_6:
+                expires_at = datetime.now() + timedelta(days=183)
+            case SubType.MONTH_12:
+                expires_at = datetime.now() + timedelta(days=365)
 
         self.type = type
         self.expires_at = expires_at

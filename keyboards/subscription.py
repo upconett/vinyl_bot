@@ -42,19 +42,19 @@ async def subscription_payment_method(lang: LangTypes) -> InlineKeyboardMarkup:
     )
 
 
-async def subscription_payment(lang: LangTypes, user: AIOgramUser) -> InlineKeyboardMarkup:
+async def subscription_payment(lang: LangTypes, payment_link: str) -> InlineKeyboardMarkup:
     match lang:
         case LangTypes.RU:
-            texts = ['Оплатить', 'Назад']
+            texts = ['Оплатить', 'Я оплатил ✅', 'Назад']
         case LangTypes.EN:
-            texts = ['Pay', 'Back']
-    btn_subscription_payment_buy = InlineKeyboardButton(
-        text=texts[0], url='sublimit.ru'
-    )
-    btn_back = InlineKeyboardButton(text=texts[1], callback_data='subscription')
+            texts = ['Pay', 'Done ✅', 'Back']
+    btn_subscription_payment_buy = InlineKeyboardButton(text=texts[0], url=payment_link)
+    btn_subscription_payment_check = InlineKeyboardButton(text=texts[1], callback_data='subscription_check')
+    btn_back = InlineKeyboardButton(text=texts[2], callback_data='subscription')
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [btn_subscription_payment_buy],
+            [btn_subscription_payment_check],
             [btn_back]
         ]
     )
