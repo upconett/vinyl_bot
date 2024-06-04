@@ -1,3 +1,4 @@
+from yoomoney import Client
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 
@@ -10,11 +11,16 @@ try:
 
     token: str = data['token']
     admins: list = data['admins']
+    bot_url: str = data['bot_url']
 
     # logging.disable_aiogram()
     logging.set_format()
     logger = logging.get_logger(data['logfile'])
-    
+
+    yoomoney_token: str = data['yoomoney_token']
+    yoomoney_client = Client(yoomoney_token)
+    yoomoney_info = yoomoney_client.account_info()
+
 
 except NoConfigFile:
     print('No config.yaml in working directory!\nSee README.md!')
