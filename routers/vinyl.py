@@ -38,7 +38,7 @@ async def query_create_vinyl(query: CallbackQuery, state: FSMContext):
 
     query_message = await query.message.edit_text(
         text=await messages.create_vinyl(lang),
-        reply_markup=keyboards.create_vinyl()
+        reply_markup=await keyboards.create_vinyl(lang)
     )
 
     data = await state.get_data()
@@ -77,7 +77,7 @@ async def message_wait_for_audio(message: Message, state: FSMContext):
 
     await message.answer(
         text=await messages.create_vinyl_template(lang),
-        reply_markup=keyboards.create_vinyl_template()
+        reply_markup=await keyboards.create_vinyl_template(lang)
     )
      
     await state.set_data(data)
@@ -101,7 +101,7 @@ async def query_wait_for_template(query: CallbackQuery, state: FSMContext):
 
     query_message = await query.message.edit_text(
         text=await messages.create_vinyl_cover(lang, tmp),
-        reply_markup=keyboards.create_vinyl()
+        reply_markup=await keyboards.create_vinyl(lang)
     )
     data['query_message_id'] = query_message.message_id
     await query.answer()
@@ -142,7 +142,7 @@ async def message_wait_for_cover(message: Message, state: FSMContext):
 
     await message.answer(
         text=await messages.create_vinyl_noise(lang, cover_type),
-        reply_markup=keyboards.create_vinyl_noise()
+        reply_markup=await keyboards.create_vinyl_noise(lang)
     )
 
     cover_type = 'photo' if cover_type == 1 else 'video'
@@ -167,7 +167,7 @@ async def query_wait_for_noise(query: CallbackQuery, state: FSMContext):
 
     await query.message.edit_text(
         text=await messages.create_vinyl_speed(lang, noise),
-        reply_markup=keyboards.create_vinyl_speed()
+        reply_markup=await keyboards.create_vinyl_speed(lang)
     )
 
     await query.answer()
@@ -190,7 +190,7 @@ async def query_wait_for_speed(query: CallbackQuery, state: FSMContext):
 
     query_message = await query.message.edit_text(
         text=await messages.create_vinyl_offset(lang, speed),
-        reply_markup=keyboards.create_vinyl_offset()
+        reply_markup=await keyboards.create_vinyl_offset(lang)
     )
     data['query_message_id'] = query_message.message_id
 
