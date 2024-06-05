@@ -260,7 +260,12 @@ async def query_end(query: CallbackQuery, state: FSMContext):
     lang = await get_language(user)
     data = await state.get_data()
 
-    await use_free_vinyl(user)
+    if not await check_sub(user):
+        if await check_free_vinyl(user):
+            await use_free_vinyl(user)
+        else:
+            await query.answer(await messages.no_free_vinyl(lang))
+            return
 
     await query.message.edit_text(
         text=f'Пластинка будет готова через {20} сек\nПеред вами в очереди {0} человек'
