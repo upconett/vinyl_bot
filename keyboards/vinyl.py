@@ -84,3 +84,19 @@ async def create_vinyl_offset(lang: LangTypes) -> InlineKeyboardMarkup:
             [btn_back]
         ]
     )
+
+
+async def create_vinyl_approve(lang: LangTypes) -> InlineKeyboardMarkup:
+    match lang:
+        case LangTypes.RU:
+            texts = ['Создать', 'Отмена']
+        case LangTypes.EN:
+            texts = ['Create', 'Cancel']
+    btn_yes = InlineKeyboardButton(text=texts[0], callback_data='create_vinyl_approve')
+    btn_no = InlineKeyboardButton(text=texts[1], callback_data='start')
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [btn_yes],
+            [btn_no]
+        ]
+    )
