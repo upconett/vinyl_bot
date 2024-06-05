@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from datetime import datetime
 from aiogram.types import User as AIOgramUser
 
 from database.base import engine
@@ -19,7 +20,11 @@ def update_user(user: AIOgramUser) -> None:
         db_user = s.get(User, {'id': user.id})
         
         if db_user == None: s.add(User(user))
-        else: db_user.update(user)
+        else:
+            db_user.update(user)
+            if db_user.subscription:
+                if db_user.subscription.expires_at < datetime.now():
+                    s.delete(db_user.subscription)
 
         s.commit()
 

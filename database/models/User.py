@@ -1,4 +1,5 @@
 import enum
+from datetime import datetime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from aiogram.types import User as AIOgramUser
 
@@ -41,8 +42,6 @@ class User(BaseModel):
         self.username = user.username
         self.first_name = user.first_name
         self.last_name = user.last_name
-
-
 
     def __repr__(self) -> str:
         return f"User(id={self.id!r}, username={self.username!r})"

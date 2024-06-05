@@ -17,3 +17,15 @@ async def check_sub_or_free_vinyl(user: AIOgramUser) -> bool:
     with Session(engine) as s:
         u = s.get(User, {'id': user.id})
         return (u.subscription is not None or u.free_vinyl != 0)
+
+
+async def check_sub(user: AIOgramUser) -> bool:
+    with Session(engine) as s:
+        u = s.get(User, {'id': user.id})
+        return u.subscription is not None
+
+
+async def check_free_vinyl(user: AIOgramUser) -> bool:
+    with Session(engine) as s:
+        u = s.get(User, {'id': user.id})
+        return u.free_vinyl != 0
