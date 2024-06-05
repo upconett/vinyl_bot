@@ -21,6 +21,7 @@ class Subscription(BaseModel):
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'))
 
     def __init__(self, type: SubType):
+        super().__init__()
         match type:
             case SubType.MONTH_1:
                 expires_at = datetime.now() + timedelta(days=31)

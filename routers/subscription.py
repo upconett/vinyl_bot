@@ -28,7 +28,7 @@ class SubscriptionStates(StatesGroup):
 @router.callback_query(F.data == 'subscription')
 async def query_subscription_rate(query: CallbackQuery, state: FSMContext):
     user = query.from_user
-    update_user(user)
+    await update_user(user)
     lang = await get_language(user)
     await query.message.edit_text(
         text=await messages.subscription_rate(lang),
@@ -42,7 +42,7 @@ async def query_subscription_rate(query: CallbackQuery, state: FSMContext):
 @router.callback_query(StateFilter(SubscriptionStates.buying), F.data.startswith('subscription_rate_'))
 async def query_subscription_payment_method(query: CallbackQuery, state: FSMContext):
     user = query.from_user
-    update_user(user)
+    await update_user(user)
     lang = await get_language(user)
     data = await state.get_data()
     rate = int(query.data.replace('subscription_rate_', ''))
@@ -60,7 +60,7 @@ async def query_subscription_payment_method(query: CallbackQuery, state: FSMCont
 @router.callback_query(StateFilter(SubscriptionStates.buying), F.data.startswith('subscription_payment_method'))
 async def query_subscription_payment(query: CallbackQuery, state: FSMContext):
     user = query.from_user
-    update_user(user)
+    await update_user(user)
     lang = await get_language(user)
     data = await state.get_data()
     rate = data['rate']
@@ -70,13 +70,12 @@ async def query_subscription_payment(query: CallbackQuery, state: FSMContext):
     if method == 'yoomoney':
         payment_link = await get_payment_link_yoomoney(user, rate)
         await query.message.edit_text(
-        text=await messages.subscription_payment(lang),
-        reply_markup=await keyboards.subscription_payment(lang, payment_link)
+            text=await messages.subscription_payment(lang),
+            reply_markup=await keyboards.subscription_payment(lang, payment_link)
         )
         await query.answer()
     else:
         await query.answer('No PayPal payment for now...', show_alert=True)
-
 
     logger.info(f'@{user.username} called subscription_payment_method_*')
 
@@ -84,13 +83,13 @@ async def query_subscription_payment(query: CallbackQuery, state: FSMContext):
 @router.callback_query(StateFilter(SubscriptionStates.buying), F.data == 'subscription_check')
 async def query_subscription_check(query: CallbackQuery, state: FSMContext):
     user = query.from_user
-    update_user(user)
+    await update_user(user)
     lang = await get_language(user)
     data = await state.get_data()
 
     rate = data['rate']
 
-    pd = get_profile_data(user)
+    pd = await get_profile_data(user)
 
     if await check_payment(user):
         await add_subscription(user, rate)

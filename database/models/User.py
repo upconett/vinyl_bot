@@ -26,10 +26,12 @@ class User(BaseModel):
     free_vinyl: Mapped[int] = mapped_column(default=1)
     free_albums: Mapped[int] = mapped_column(default=1)
 
-    subscription: Mapped[Subscription] = relationship(cascade='all, delete-orphan')
-
+    subscription: Mapped[Subscription] = relationship(
+        cascade='all, delete-orphan', lazy='selectin'
+    )
 
     def __init__(self, user: AIOgramUser):
+        super().__init__()
         self.id = user.id
         self.username = user.username
         self.first_name = user.first_name
@@ -37,7 +39,7 @@ class User(BaseModel):
         self.language = LangTypes.RU if user.language_code == 'ru' else LangTypes.EN
 
 
-    def update(self, user: AIOgramUser) -> None:
+    async def update(self, user: AIOgramUser) -> None:
         """Обновление данных о пользователе"""
         self.username = user.username
         self.first_name = user.first_name

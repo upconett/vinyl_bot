@@ -1,9 +1,9 @@
 from datetime import datetime
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram.types import User as AIOgramUser
 from yoomoney import Quickpay
 
-from database.base import engine
+from database.base import async_engine
 from database.models import User, Subscription
 from database.models.Subscription import SubType
 from database.models.User import LangTypes
@@ -13,10 +13,10 @@ from create_bot import yoomoney_info, yoomoney_client, bot_url
 
 
 async def save_last_payment_label(user: AIOgramUser, label: str):
-    with Session(engine) as s:
-        u = s.get(User, {'id': user.id})
+    async with AsyncSession(async_engine) as s:
+        u = await s.get(User, {'id': user.id})
         u.last_payment_label = label
-        s.commit()
+        await s.commit()
 
 
 async def get_payment_link_yoomoney(user: AIOgramUser, subscription_rate: int) -> str:
@@ -66,9 +66,9 @@ async def check_payment(user: AIOgramUser):
 
 async def add_subscription(user: AIOgramUser, rate: int):
     if rate == 1: rate = SubType.MONTH_1
-    if rate == 6: rate = SubType.MONTH_6
-    if rate == 12: rate = SubType.MONTH_12
-    with Session(engine) as s:
-        u = s.get(User, {'id': user.id})
+    elif rate == 6: rate = SubType.MONTH_6
+    elif rate == 12: rate = SubType.MONTH_12
+    async with AsyncSession(async_engine) as s:
+        u = await s.get(User, {'id': user.id})
         u.subscription = Subscription(type=rate)
-        s.commit()
+        await s.commit()
