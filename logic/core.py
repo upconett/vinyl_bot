@@ -29,8 +29,8 @@ def get_profile_data(user: AIOgramUser) -> ProfileData:
         db_user = s.get(User, {'id': user.id})
         return ProfileData(
             subscription=db_user.subscription,
-            free_vinyl=3,                           # TODO -----------------------
-            free_albums=3
+            free_vinyl=db_user.free_vinyl,                           # TODO -----------------------
+            free_albums=db_user.free_albums
         )
         
 

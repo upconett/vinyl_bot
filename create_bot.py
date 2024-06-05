@@ -17,6 +17,8 @@ try:
     logging.set_format()
     logger = logging.get_logger(data['logfile'])
 
+    dbfile = data['dbfile']
+
     yoomoney_token: str = data['yoomoney_token']
     yoomoney_client = Client(yoomoney_token)
     yoomoney_info = yoomoney_client.account_info()

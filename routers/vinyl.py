@@ -14,6 +14,7 @@ from keyboards import core as keyboards_core
 from utility.template_images import get_image
 
 from logic.core import *
+from logic.vinyl import *
 
 
 router = Router(name='vinyl')
@@ -25,6 +26,7 @@ class CreationStates(StatesGroup):
     wait_for_noise = State()
     wait_for_speed = State()
     wait_for_offset = State()
+    wait_for_approve = State()
 
 
 
@@ -33,6 +35,11 @@ async def query_create_vinyl(query: CallbackQuery, state: FSMContext):
     user = query.from_user
     update_user(user)
     lang = await get_language(user)
+
+
+    if not await check_sub_or_free_vinyl(user):
+        await query.answer(await messages.no_free_vinyl(lang))
+        return
 
     await state.set_state(CreationStates.wait_for_audio)
 
@@ -202,7 +209,7 @@ async def query_wait_for_speed(query: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(StateFilter(CreationStates.wait_for_offset), F.data.startswith('create_vinyl_offset_'))
-async def query_end(query: CallbackQuery, state: FSMContext):
+async def query_wait_for_approve(query: CallbackQuery, state: FSMContext):
     user = query.from_user
     update_user(user)
     lang = await get_language(user)
@@ -210,29 +217,17 @@ async def query_end(query: CallbackQuery, state: FSMContext):
 
     data['offset'] = '00:00'
 
-    await bot.delete_message(user.id, data['query_message_id'])
-
-    await query.message.answer(
-        text=f'Пластинка будет готова через {20} сек\nПеред вами в очереди {0} человек' # TODO ------------- ADD seconds counter, queue counter, reduce free vinyl count
-    )
-    await query.message.answer(
-        text=(
-            f'```json\n{json.dumps(data, indent=4, ensure_ascii=False)}\n```'
-        ),
-        parse_mode='MarkdownV2'
-    )
-    await query.message.answer(
-        text=await messages_core.start(lang, user),
-        reply_markup=await keyboards_core.start(lang)
+    await query.message.edit_text(
+        text=await messages.create_vinyl_approve(lang, data),
+        reply_markup=await keyboards.create_vinyl_approve(lang)
     )
 
-
-    await state.clear()
-    logger.info(f'@{user.username} started vinyl creation with offset 00:00')
+    await state.set_state(CreationStates.wait_for_approve)
+    logger.info(f'@{user.username} chose offset 00:00')
 
 
 @router.message(StateFilter(CreationStates.wait_for_offset), F.text)
-async def message_end(message: Message, state: FSMContext):
+async def message_wait_for_approve(message: Message, state: FSMContext):
     user = message.from_user
     update_user(user)
     lang = await get_language(user)
@@ -242,7 +237,7 @@ async def message_end(message: Message, state: FSMContext):
         message.text.count(':') == 1 and all(x.isdigit() for x in message.text.replace(':', '')):
         offset = message.text
     else:
-        message.answer('Неверный формат!')
+        await message.answer(await message.wrong_format(lang))
         return
 
     data['offset'] = offset
@@ -250,18 +245,37 @@ async def message_end(message: Message, state: FSMContext):
     await bot.delete_message(user.id, data['query_message_id'])
 
     await message.answer(
-        text=f'Пластинка будет готова через {20} сек\nПеред вами в очереди {0} человек' # TODO ------------- ADD seconds counter, queue counter, reduce free vinyl count
+        text=await messages.create_vinyl_approve(lang, data),
+        reply_markup=await keyboards.create_vinyl_approve(lang)
     )
-    await message.answer(
+
+    await state.set_state(CreationStates.wait_for_approve)
+    logger.info(f'@{user.username} chose offset {offset}')
+
+
+@router.callback_query(StateFilter(CreationStates.wait_for_approve))
+async def query_end(query: CallbackQuery, state: FSMContext):
+    user = query.from_user
+    update_user(user)
+    lang = await get_language(user)
+    data = await state.get_data()
+
+    await use_free_vinyl(user)
+
+    await query.message.edit_text(
+        text=f'Пластинка будет готова через {20} сек\nПеред вами в очереди {0} человек'
+        # TODO ------------- ADD seconds counter, queue counter
+    )
+    await query.message.answer(
         text=(
             f'```json\n{json.dumps(data, indent=4, ensure_ascii=False)}\n```'
         ),
         parse_mode='MarkdownV2'
     )
-    await message.answer(
+    await query.message.answer(
         text=await messages_core.start(lang, user),
         reply_markup=await keyboards_core.start(lang)
     )
 
     await state.clear()
-    logger.info(f'@{user.username} started vinyl creation with offset {offset}')
+    logger.info(f'@{user.username} started vinyl creation')
