@@ -25,7 +25,7 @@ class CreationStates(StatesGroup):
 @router.callback_query(F.data == 'create_album')
 async def query_create_album(query: CallbackQuery, state: FSMContext):
     user = query.from_user
-    update_user(user)
+    await update_user(user)
     data = await state.get_data()
 
     image_id = get_image('templates_album')
@@ -38,7 +38,7 @@ async def query_create_album(query: CallbackQuery, state: FSMContext):
     await query.message.delete()
     await query.message.answer(
         text='Выбери тип шаблона',
-        reply_markup=keyboards.create_album_template()
+        reply_markup=await keyboards.create_album_template()
     )
 
     await query.answer()
@@ -52,16 +52,12 @@ async def query_create_album(query: CallbackQuery, state: FSMContext):
 @router.callback_query(StateFilter(CreationStates.wait_for_template), F.data.startswith('create_album_template_'))
 async def query_wait_for_template(query: CallbackQuery, state: FSMContext):
     user = query.from_user
-    update_user(user)
+    await update_user(user)
     data = await state.get_data()
 
     tmp = int(query.data.replace('create_album_template_', ''))
 
     data['template'] = tmp
-
-    await query.message.edit_text(
-        
-    )
 
 
 

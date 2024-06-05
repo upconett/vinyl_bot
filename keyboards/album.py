@@ -1,7 +1,7 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 
-def create_album_template() -> InlineKeyboardMarkup:
+async def create_album_template() -> InlineKeyboardMarkup:
     buttons_choice = [
         InlineKeyboardButton(
             text=f'{x}',

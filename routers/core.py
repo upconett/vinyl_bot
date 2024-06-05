@@ -17,7 +17,7 @@ router = Router(name='core')
 @router.message(CommandStart())
 async def message_start(message: Message, state: FSMContext):
     user = message.from_user
-    update_user(user)
+    await update_user(user)
     lang = await get_language(user)
 
     data = await state.get_data()
@@ -29,7 +29,6 @@ async def message_start(message: Message, state: FSMContext):
     await state.set_data({})
     await state.clear()
 
-
     await message.answer(
         text=await messages.start(lang, user),
         reply_markup=await keyboards.start(lang)
@@ -40,7 +39,7 @@ async def message_start(message: Message, state: FSMContext):
 @router.callback_query(F.data == 'start')
 async def query_start(query: CallbackQuery, state: FSMContext):
     user = query.from_user
-    update_user(user)
+    await update_user(user)
     lang = await get_language(user)
 
     data = await state.get_data()
@@ -52,7 +51,9 @@ async def query_start(query: CallbackQuery, state: FSMContext):
 
     try:
         await query.message.delete()
-    except: pass
+    except:
+        pass
+
     await query.message.answer(
         text=await messages.start(lang, user),
         reply_markup=await keyboards.start(lang)
@@ -67,10 +68,10 @@ async def query_start(query: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == 'profile')
 async def query_profile(query: CallbackQuery):
     user = query.from_user
-    update_user(user)
+    await update_user(user)
     lang = await get_language(user)
 
-    pd = get_profile_data(user)
+    pd = await get_profile_data(user)
     await query.message.edit_text(
         text=await messages.profile(lang, pd),
         reply_markup=await keyboards.profile(lang)
@@ -82,7 +83,7 @@ async def query_profile(query: CallbackQuery):
 @router.callback_query(F.data == 'language')
 async def query_language(query: CallbackQuery):
     user = query.from_user
-    update_user(user)
+    await update_user(user)
     lang = await get_language(user)
 
     await query.message.edit_text(
@@ -96,14 +97,13 @@ async def query_language(query: CallbackQuery):
 @router.callback_query(F.data.startswith('language_'))
 async def query_language_set(query: CallbackQuery):
     user = query.from_user
-    update_user(user)
+    await update_user(user)
 
-    
-    lang = set_language(user, query.data.replace('language_', ''))
+    lang = await set_language(user, query.data.replace('language_', ''))
     if lang == LangTypes.RU: answer_text = "Язык установлен 🇷🇺"
     else: answer_text = "Language set 🇺🇸"
 
-    pd = get_profile_data(user)
+    pd = await get_profile_data(user)
     await query.message.edit_text(
         text=await messages.profile(lang, pd),
         reply_markup=await keyboards.profile(lang)

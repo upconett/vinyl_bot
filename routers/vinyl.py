@@ -33,9 +33,8 @@ class CreationStates(StatesGroup):
 @router.callback_query(F.data == 'create_vinyl')
 async def query_create_vinyl(query: CallbackQuery, state: FSMContext):
     user = query.from_user
-    update_user(user)
+    await update_user(user)
     lang = await get_language(user)
-
 
     if not await check_sub_or_free_vinyl(user):
         await query.answer(await messages.no_free_vinyl(lang))
@@ -58,12 +57,14 @@ async def query_create_vinyl(query: CallbackQuery, state: FSMContext):
 
 @router.message(StateFilter(CreationStates.wait_for_audio))
 async def message_wait_for_audio(message: Message, state: FSMContext):
-    if not any([message.audio, message.voice]): return
+    if not any([message.audio, message.voice]):
+        return
     user = message.from_user
-    update_user(user)
+    await update_user(user)
     lang = await get_language(user)
     data = await state.get_data()
 
+    file = None
     if message.audio: file = message.audio
     elif message.voice: file = message.voice
     if file.duration < 3:
@@ -96,7 +97,7 @@ async def message_wait_for_audio(message: Message, state: FSMContext):
 @router.callback_query(StateFilter(CreationStates.wait_for_template), F.data.startswith('create_vinyl_template_'))
 async def query_wait_for_template(query: CallbackQuery, state: FSMContext):
     user = query.from_user
-    update_user(user)
+    await update_user(user)
     lang = await get_language(user)
     data = await state.get_data()
 
@@ -123,7 +124,7 @@ async def query_wait_for_template(query: CallbackQuery, state: FSMContext):
 async def message_wait_for_cover(message: Message, state: FSMContext):
     if not any([message.photo, message.video, message.document]): return
     user = message.from_user
-    update_user(user)
+    await update_user(user)
     lang = await get_language(user)
     data = await state.get_data()
 
@@ -163,7 +164,7 @@ async def message_wait_for_cover(message: Message, state: FSMContext):
 @router.callback_query(StateFilter(CreationStates.wait_for_noise), F.data.startswith('create_vinyl_noise_'))
 async def query_wait_for_noise(query: CallbackQuery, state: FSMContext):
     user = query.from_user
-    update_user(user)
+    await update_user(user)
     lang = await get_language(user)
     data = await state.get_data()
 
@@ -187,7 +188,7 @@ async def query_wait_for_noise(query: CallbackQuery, state: FSMContext):
 @router.callback_query(StateFilter(CreationStates.wait_for_speed), F.data.startswith('create_vinyl_speed_'))
 async def query_wait_for_speed(query: CallbackQuery, state: FSMContext):
     user = query.from_user
-    update_user(user)
+    await update_user(user)
     lang = await get_language(user)
     data = await state.get_data()
 
@@ -211,7 +212,7 @@ async def query_wait_for_speed(query: CallbackQuery, state: FSMContext):
 @router.callback_query(StateFilter(CreationStates.wait_for_offset), F.data.startswith('create_vinyl_offset_'))
 async def query_wait_for_approve(query: CallbackQuery, state: FSMContext):
     user = query.from_user
-    update_user(user)
+    await update_user(user)
     lang = await get_language(user)
     data = await state.get_data()
 
@@ -229,12 +230,12 @@ async def query_wait_for_approve(query: CallbackQuery, state: FSMContext):
 @router.message(StateFilter(CreationStates.wait_for_offset), F.text)
 async def message_wait_for_approve(message: Message, state: FSMContext):
     user = message.from_user
-    update_user(user)
+    await update_user(user)
     lang = await get_language(user)
     data = await state.get_data()
 
     if len(message.text) == 5 and message.text[2] == ':' and \
-        message.text.count(':') == 1 and all(x.isdigit() for x in message.text.replace(':', '')):
+            message.text.count(':') == 1 and all(x.isdigit() for x in message.text.replace(':', '')):
         offset = message.text
     else:
         await message.answer(await message.wrong_format(lang))
@@ -256,7 +257,7 @@ async def message_wait_for_approve(message: Message, state: FSMContext):
 @router.callback_query(StateFilter(CreationStates.wait_for_approve))
 async def query_end(query: CallbackQuery, state: FSMContext):
     user = query.from_user
-    update_user(user)
+    await update_user(user)
     lang = await get_language(user)
     data = await state.get_data()
 
