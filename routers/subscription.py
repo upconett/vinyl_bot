@@ -16,6 +16,7 @@ from keyboards import core as keyboards_core
 
 from logic.core import *
 from logic.subscription import get_payment_link_yoomoney, check_payment, add_subscription
+from logic.vinyl import *
 
 
 router = Router(name='subscription')
@@ -30,6 +31,13 @@ async def query_subscription_rate(query: CallbackQuery, state: FSMContext):
     user = query.from_user
     await update_user(user)
     lang = await get_language(user)
+
+    if await check_sub(user):
+        await query.answer(await messages.subscription_already(lang))
+        logger.info(f'@{user.username} is already subscribed')
+        return
+
+
     await query.message.edit_text(
         text=await messages.subscription_rate(lang),
         reply_markup=await keyboards.subscription_rate(lang)
@@ -99,5 +107,7 @@ async def query_subscription_check(query: CallbackQuery, state: FSMContext):
             reply_markup=await keyboards_core.profile(lang)
         )
         await query.answer(await messages.payment_success(lang))
+        logger.info(f'@{user.username} paid for subscription for {rate} months')
     else:
         await query.answer(await messages.payment_fault(lang))
+        logger.info(f'@{user.username} didn\'t pay yet')

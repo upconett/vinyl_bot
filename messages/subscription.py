@@ -9,6 +9,14 @@ async def subscription_rate(lang: LangTypes) -> str:
             return 'Choose plan'
 
 
+async def subscription_already(lang: LangTypes) -> str:
+    match lang:
+        case LangTypes.RU:
+            return '✅ Подписка уже оформлена'
+        case LangTypes.EN:
+            return '✅ You are already subscribed'
+
+
 async def subscription_payment_method(lang: LangTypes) -> str:
     match lang:
         case LangTypes.RU:
