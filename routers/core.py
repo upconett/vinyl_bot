@@ -21,6 +21,12 @@ async def message_start(message: Message, state: FSMContext):
     lang = await get_language(user)
 
     data = await state.get_data()
+
+    await message.answer(
+        text=messages.start(lang, user),
+        reply_markup=keyboards.start(lang)
+    )
+
     for key in data.keys():
         try: 
             if 'id' in key: 
@@ -28,11 +34,7 @@ async def message_start(message: Message, state: FSMContext):
         except: pass
     await state.set_data({})
     await state.clear()
-
-    await message.answer(
-        text=messages.start(lang, user),
-        reply_markup=keyboards.start(lang)
-    )
+ 
     logger.info(f'@{user.username} started bot')
 
 
@@ -43,6 +45,12 @@ async def query_start(query: CallbackQuery, state: FSMContext):
     lang = await get_language(user)
 
     data = await state.get_data()
+
+    await query.message.answer(
+        text=messages.start(lang, user),
+        reply_markup=keyboards.start(lang)
+    )
+
     for key in data.keys():
         try:
             if 'id' in key:
@@ -53,11 +61,6 @@ async def query_start(query: CallbackQuery, state: FSMContext):
         await query.message.delete()
     except:
         pass
-
-    await query.message.answer(
-        text=messages.start(lang, user),
-        reply_markup=keyboards.start(lang)
-    )
 
     await state.set_data({})
     await state.clear()

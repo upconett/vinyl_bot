@@ -38,12 +38,12 @@ async def query_create_album(query: CallbackQuery, state: FSMContext):
     if image_id:
         photo_message = await query.message.answer_photo(photo=image_id)
     else:
-        photo_message = await query.message.answer(messages_core)
+        photo_message = await query.message.answer(messages_core.template_image_warning(lang))
     data['photo_id'] = photo_message.message_id
 
     await query.message.delete()
     await query.message.answer(
-        text='Выбери тип шаблона',
+        text=messages.create_album_template(lang),
         reply_markup=keyboards.create_album_template(lang)
     )
 
@@ -59,6 +59,7 @@ async def query_create_album(query: CallbackQuery, state: FSMContext):
 async def query_wait_for_template(query: CallbackQuery, state: FSMContext):
     user = query.from_user
     await update_user(user)
+    lang = await get_language(user)
     data = await state.get_data()
 
     tmp = int(query.data.replace('create_album_template_', ''))
@@ -66,14 +67,14 @@ async def query_wait_for_template(query: CallbackQuery, state: FSMContext):
     data['template'] = tmp
 
     if tmp == 1:
-        text = 'Пришли мне фото которое будет на альбоме\n'
+        text = messages.wait_single_photo(lang)
         st = CreationStates.wait_for_single_photo
     else:
-        text = 'Пришли мне фото для левой страницы\n'
+        text = messages.wait_first_photo(lang)
         st = CreationStates.wait_for_first_photo
     
     last_message = await query.message.edit_text(
-        text=text+'Учти, что фото желательно скидывать разрешения X на Y иначе может получиться некрасиво',
+        text=text+messages.wait_for_photo(lang),
         reply_markup=None
     )
 
@@ -97,7 +98,7 @@ async def message_wait_for_first_photo(message: Message, state: FSMContext):
     data['photos'] = [file_id]
 
     last_message = await message.answer(
-        text='Теперь пришли мне фото для правой страницы\nУчти, что фото желательно скидывать разрешения X на Y иначе может получиться некрасиво'
+        text=messages.wait_second_photo(lang)
     )
     
     await bot.delete_message(user.id, data['last_message_id'])
@@ -117,16 +118,14 @@ async def message_wait_for_singe_or_second_photo(message: Message, state: FSMCon
     data = await state.get_data()
 
     file_id = message.photo[-1].file_id
-    if data['photos']:
+    if 'photos' in data.keys():
         data['photos'].append(file_id)
     else:
         data['photos'] = [file_id]
 
-    tmp = data['template']
-
     last_message = await message.answer(
         # photo=tmp_photo...                                                      <--------------------------------------- TODO
-        text=f'Выбран шаблон: {tmp}\n\nСоздать альбом с этими настройками?',
+        text=messages.create_album_approve(lang, data),
         reply_markup=keyboards.create_album_approve(lang)
     )
 
@@ -146,7 +145,7 @@ async def message_wrong_photo_format(message: Message, state: FSMContext):
     lang = await get_language(user)
 
     await message.answer(
-        text='Пожалуйста, пришлите сжатое фото\nИли введите /start, чтобы отменить создание альбома'
+        text=messages.wrong_photo_format(lang)
     )
     await message.delete()
     logger.info(f'@{user.username} sent wrong format creating album')
@@ -160,7 +159,7 @@ async def query_wait_for_approve(query: CallbackQuery, state: FSMContext):
     data = await state.get_data()
 
     await query.message.edit_text(
-        text='Супер, подожди N сек и твой альбом будет готов\nПеред вами в очереди X человек',
+        text=messages.creation_end(lang, 20, 0),
         reply_markup=None
     )
 

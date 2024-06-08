@@ -74,8 +74,6 @@ async def message_wait_for_audio(message: Message, state: FSMContext):
     await bot.download(file=file_id, destination=f'./audio/{file_id}.mp3')
     data['audio_file'] = ('./audio/' + file_id + '.mp3')
 
-    await bot.delete_message(user.id, data['query_message_id'])
-
     image_id = get_image('templates_vinyl')
     if image_id:
         photo_message = await message.answer_photo(photo=image_id)
@@ -87,6 +85,8 @@ async def message_wait_for_audio(message: Message, state: FSMContext):
         text=messages.create_vinyl_template(lang),
         reply_markup=keyboards.create_vinyl_template(lang)
     )
+
+    await bot.delete_message(user.id, data['query_message_id'])
      
     await state.set_data(data)
 
@@ -101,8 +101,6 @@ async def query_wait_for_template(query: CallbackQuery, state: FSMContext):
     lang = await get_language(user)
     data = await state.get_data()
 
-    await bot.delete_message(user.id, data['photo_id'])
-
     # Получаем номер шаблона из callback_query.data
     tmp = int(query.data.replace('create_vinyl_template_', ''))
     data['template'] = tmp
@@ -113,6 +111,8 @@ async def query_wait_for_template(query: CallbackQuery, state: FSMContext):
     )
     data['query_message_id'] = query_message.message_id
     await query.answer()
+
+    await bot.delete_message(user.id, data['photo_id'])
 
     await state.set_data(data)
 
@@ -146,12 +146,12 @@ async def message_wait_for_cover(message: Message, state: FSMContext):
         data['cover_file'] = ('./cover/' + file_id + '.mp4')
         cover_type = 2
 
-    await bot.delete_message(user.id, data['query_message_id'])
-
     await message.answer(
         text=messages.create_vinyl_noise(lang, cover_type),
         reply_markup=keyboards.create_vinyl_noise(lang)
     )
+
+    await bot.delete_message(user.id, data['query_message_id'])
 
     cover_type = 'photo' if cover_type == 1 else 'video'
 
@@ -243,18 +243,18 @@ async def message_wait_for_approve(message: Message, state: FSMContext):
 
     data['offset'] = offset
 
-    await bot.delete_message(user.id, data['query_message_id'])
-
     await message.answer(
         text=messages.create_vinyl_approve(lang, data),
         reply_markup=keyboards.create_vinyl_approve(lang)
     )
 
+    await bot.delete_message(user.id, data['query_message_id'])
+
     await state.set_state(CreationStates.wait_for_approve)
     logger.info(f'@{user.username} chose offset {offset}')
 
 
-@router.callback_query(StateFilter(CreationStates.wait_for_approve))
+@router.callback_query(StateFilter(CreationStates.wait_for_approve), F.data == 'create_vinyl_approve')
 async def query_end(query: CallbackQuery, state: FSMContext):
     user = query.from_user
     await update_user(user)
@@ -269,7 +269,7 @@ async def query_end(query: CallbackQuery, state: FSMContext):
             return
 
     await query.message.edit_text(
-        text=f'Пластинка будет готова через {20} сек\nПеред вами в очереди {0} человек'
+        text=messages.creation_end(lang, 20, 0)
         # TODO ------------- ADD seconds counter, queue counter
     )
     await query.message.answer(
