@@ -109,3 +109,17 @@ def wrong_format(lang: LangTypes) -> str:
             return 'Неверный формат!'
         case LangTypes.EN:
             return 'Invalid format!'
+
+
+def creation_end(lang: LangTypes, time: int, queue: int):
+    match lang:
+        case LangTypes.RU:
+            return (
+                f'Супер, подожди {time} сек и пластинка будет готова\n'
+                f'Перед тобой в очереди {queue} человек'
+            )
+        case LangTypes.EN:
+            return (
+                f'Super, wait {time} seconds for your record to be ready\n'
+                f'It\'s {queue} people in queue before you'
+            )
