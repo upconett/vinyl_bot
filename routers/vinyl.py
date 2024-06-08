@@ -37,14 +37,14 @@ async def query_create_vinyl(query: CallbackQuery, state: FSMContext):
     lang = await get_language(user)
 
     if not await check_sub_or_free_vinyl(user):
-        await query.answer(await messages.no_free_vinyl(lang))
+        await query.answer(messages.no_free_vinyl(lang))
         return
 
     await state.set_state(CreationStates.wait_for_audio)
 
     query_message = await query.message.edit_text(
-        text=await messages.create_vinyl(lang),
-        reply_markup=await keyboards.create_vinyl(lang)
+        text=messages.create_vinyl(lang),
+        reply_markup=keyboards.create_vinyl(lang)
     )
 
     data = await state.get_data()
@@ -68,7 +68,7 @@ async def message_wait_for_audio(message: Message, state: FSMContext):
     if message.audio: file = message.audio
     elif message.voice: file = message.voice
     if file.duration < 3:
-        await message.answer(await messages.audio_fail(lang))
+        await message.answer(messages.audio_fail(lang))
         return
     file_id = file.file_id
     await bot.download(file=file_id, destination=f'./audio/{file_id}.mp3')
@@ -80,12 +80,12 @@ async def message_wait_for_audio(message: Message, state: FSMContext):
     if image_id:
         photo_message = await message.answer_photo(photo=image_id)
     else:
-        photo_message = await message.answer(await messages.template_image_warning(lang))
+        photo_message = await message.answer(messages_core.template_image_warning(lang))
     data['photo_id'] = photo_message.message_id
 
     await message.answer(
-        text=await messages.create_vinyl_template(lang),
-        reply_markup=await keyboards.create_vinyl_template(lang)
+        text=messages.create_vinyl_template(lang),
+        reply_markup=keyboards.create_vinyl_template(lang)
     )
      
     await state.set_data(data)
@@ -108,8 +108,8 @@ async def query_wait_for_template(query: CallbackQuery, state: FSMContext):
     data['template'] = tmp
 
     query_message = await query.message.edit_text(
-        text=await messages.create_vinyl_cover(lang, tmp),
-        reply_markup=await keyboards.create_vinyl(lang)
+        text=messages.create_vinyl_cover(lang, tmp),
+        reply_markup=keyboards.create_vinyl(lang)
     )
     data['query_message_id'] = query_message.message_id
     await query.answer()
@@ -129,7 +129,7 @@ async def message_wait_for_cover(message: Message, state: FSMContext):
     data = await state.get_data()
 
     if message.document: 
-        await message.answer(await messages.cover_failure(lang))
+        await message.answer(messages.cover_failure(lang))
         logger.info(f'@{user.username} sent document and got rejected')
         return
 
@@ -149,8 +149,8 @@ async def message_wait_for_cover(message: Message, state: FSMContext):
     await bot.delete_message(user.id, data['query_message_id'])
 
     await message.answer(
-        text=await messages.create_vinyl_noise(lang, cover_type),
-        reply_markup=await keyboards.create_vinyl_noise(lang)
+        text=messages.create_vinyl_noise(lang, cover_type),
+        reply_markup=keyboards.create_vinyl_noise(lang)
     )
 
     cover_type = 'photo' if cover_type == 1 else 'video'
@@ -174,8 +174,8 @@ async def query_wait_for_noise(query: CallbackQuery, state: FSMContext):
     data['noise'] = noise
 
     await query.message.edit_text(
-        text=await messages.create_vinyl_speed(lang, noise),
-        reply_markup=await keyboards.create_vinyl_speed(lang)
+        text=messages.create_vinyl_speed(lang, noise),
+        reply_markup=keyboards.create_vinyl_speed(lang)
     )
 
     await query.answer()
@@ -197,8 +197,8 @@ async def query_wait_for_speed(query: CallbackQuery, state: FSMContext):
     data['speed'] = speed
 
     query_message = await query.message.edit_text(
-        text=await messages.create_vinyl_offset(lang, speed),
-        reply_markup=await keyboards.create_vinyl_offset(lang)
+        text=messages.create_vinyl_offset(lang, speed),
+        reply_markup=keyboards.create_vinyl_offset(lang)
     )
     data['query_message_id'] = query_message.message_id
 
@@ -219,8 +219,8 @@ async def query_wait_for_approve(query: CallbackQuery, state: FSMContext):
     data['offset'] = '00:00'
 
     await query.message.edit_text(
-        text=await messages.create_vinyl_approve(lang, data),
-        reply_markup=await keyboards.create_vinyl_approve(lang)
+        text=messages.create_vinyl_approve(lang, data),
+        reply_markup=keyboards.create_vinyl_approve(lang)
     )
 
     await state.set_state(CreationStates.wait_for_approve)
@@ -246,8 +246,8 @@ async def message_wait_for_approve(message: Message, state: FSMContext):
     await bot.delete_message(user.id, data['query_message_id'])
 
     await message.answer(
-        text=await messages.create_vinyl_approve(lang, data),
-        reply_markup=await keyboards.create_vinyl_approve(lang)
+        text=messages.create_vinyl_approve(lang, data),
+        reply_markup=keyboards.create_vinyl_approve(lang)
     )
 
     await state.set_state(CreationStates.wait_for_approve)
@@ -265,7 +265,7 @@ async def query_end(query: CallbackQuery, state: FSMContext):
         if await check_free_vinyl(user):
             await use_free_vinyl(user)
         else:
-            await query.answer(await messages.no_free_vinyl(lang))
+            await query.answer(messages.no_free_vinyl(lang))
             return
 
     await query.message.edit_text(
@@ -279,8 +279,8 @@ async def query_end(query: CallbackQuery, state: FSMContext):
         parse_mode='MarkdownV2'
     )
     await query.message.answer(
-        text=await messages_core.start(lang, user),
-        reply_markup=await keyboards_core.start(lang)
+        text=messages_core.start(lang, user),
+        reply_markup=keyboards_core.start(lang)
     )
 
     await state.clear()

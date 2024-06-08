@@ -38,13 +38,13 @@ async def query_create_album(query: CallbackQuery, state: FSMContext):
     if image_id:
         photo_message = await query.message.answer_photo(photo=image_id)
     else:
-        photo_message = await query.message.answer('Картинка шаблонов не выставлена!')
+        photo_message = await query.message.answer(messages_core)
     data['photo_id'] = photo_message.message_id
 
     await query.message.delete()
     await query.message.answer(
         text='Выбери тип шаблона',
-        reply_markup=await keyboards.create_album_template(lang)
+        reply_markup=keyboards.create_album_template(lang)
     )
 
     await query.answer()
@@ -127,7 +127,7 @@ async def message_wait_for_singe_or_second_photo(message: Message, state: FSMCon
     last_message = await message.answer(
         # photo=tmp_photo...                                                      <--------------------------------------- TODO
         text=f'Выбран шаблон: {tmp}\n\nСоздать альбом с этими настройками?',
-        reply_markup=await keyboards.create_album_approve(lang)
+        reply_markup=keyboards.create_album_approve(lang)
     )
 
     await bot.delete_message(user.id, data['last_message_id'])
@@ -172,8 +172,8 @@ async def query_wait_for_approve(query: CallbackQuery, state: FSMContext):
     )
 
     await query.message.answer(
-        text=await messages_core.start(lang, user),
-        reply_markup=await keyboards_core.start(lang)
+        text=messages_core.start(lang, user),
+        reply_markup=keyboards_core.start(lang)
     )
 
     await state.clear()

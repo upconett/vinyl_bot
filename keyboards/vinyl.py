@@ -2,7 +2,7 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from database.models.User import LangTypes
 
-async def create_vinyl(lang: LangTypes) -> InlineKeyboardMarkup:
+def create_vinyl(lang: LangTypes) -> InlineKeyboardMarkup:
     match lang:
         case LangTypes.RU:
             text = 'Назад'
@@ -14,7 +14,7 @@ async def create_vinyl(lang: LangTypes) -> InlineKeyboardMarkup:
     )
 
 
-async def create_vinyl_template(lang: LangTypes) -> InlineKeyboardMarkup:
+def create_vinyl_template(lang: LangTypes) -> InlineKeyboardMarkup:
     match lang:
         case LangTypes.RU:
             text = 'Назад'
@@ -35,7 +35,7 @@ async def create_vinyl_template(lang: LangTypes) -> InlineKeyboardMarkup:
     )
 
 
-async def create_vinyl_noise(lang: LangTypes) -> InlineKeyboardMarkup:
+def create_vinyl_noise(lang: LangTypes) -> InlineKeyboardMarkup:
     match lang:
         case LangTypes.RU:
             texts = ['Да', 'Нет', 'Назад']
@@ -52,7 +52,7 @@ async def create_vinyl_noise(lang: LangTypes) -> InlineKeyboardMarkup:
     )
 
 
-async def create_vinyl_speed(lang: LangTypes) -> InlineKeyboardMarkup:
+def create_vinyl_speed(lang: LangTypes) -> InlineKeyboardMarkup:
     match lang:
         case LangTypes.RU:
             texts = ['Полный оборот', 'Назад']
@@ -70,7 +70,7 @@ async def create_vinyl_speed(lang: LangTypes) -> InlineKeyboardMarkup:
     )
 
 
-async def create_vinyl_offset(lang: LangTypes) -> InlineKeyboardMarkup:
+def create_vinyl_offset(lang: LangTypes) -> InlineKeyboardMarkup:
     match lang:
         case LangTypes.RU:
             texts = ['С начала', 'Назад']
@@ -86,7 +86,7 @@ async def create_vinyl_offset(lang: LangTypes) -> InlineKeyboardMarkup:
     )
 
 
-async def create_vinyl_approve(lang: LangTypes) -> InlineKeyboardMarkup:
+def create_vinyl_approve(lang: LangTypes) -> InlineKeyboardMarkup:
     match lang:
         case LangTypes.RU:
             texts = ['Создать', 'Отмена']

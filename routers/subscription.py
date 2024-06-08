@@ -33,14 +33,14 @@ async def query_subscription_rate(query: CallbackQuery, state: FSMContext):
     lang = await get_language(user)
 
     if await check_sub(user):
-        await query.answer(await messages.subscription_already(lang))
+        await query.answer(messages.subscription_already(lang))
         logger.info(f'@{user.username} is already subscribed')
         return
 
 
     await query.message.edit_text(
-        text=await messages.subscription_rate(lang),
-        reply_markup=await keyboards.subscription_rate(lang)
+        text=messages.subscription_rate(lang),
+        reply_markup=keyboards.subscription_rate(lang)
     )
     await query.answer()
     await state.set_state(SubscriptionStates.buying)
@@ -57,8 +57,8 @@ async def query_subscription_payment_method(query: CallbackQuery, state: FSMCont
     data['rate'] = rate
 
     await query.message.edit_text(
-        text=await messages.subscription_payment_method(lang),
-        reply_markup=await keyboards.subscription_payment_method(lang)
+        text=messages.subscription_payment_method(lang),
+        reply_markup=keyboards.subscription_payment_method(lang)
     )
     await state.set_data(data)
     await query.answer()
@@ -78,8 +78,8 @@ async def query_subscription_payment(query: CallbackQuery, state: FSMContext):
     if method == 'yoomoney':
         payment_link = await get_payment_link_yoomoney(user, rate)
         await query.message.edit_text(
-            text=await messages.subscription_payment(lang),
-            reply_markup=await keyboards.subscription_payment(lang, payment_link)
+            text=messages.subscription_payment(lang),
+            reply_markup=keyboards.subscription_payment(lang, payment_link)
         )
         await query.answer()
     else:
@@ -103,11 +103,11 @@ async def query_subscription_check(query: CallbackQuery, state: FSMContext):
         await add_subscription(user, rate)
         await asyncio.sleep(.2)
         await query.message.edit_text(
-            text=await messages_core.profile(lang, pd),
-            reply_markup=await keyboards_core.profile(lang)
+            text=messages_core.profile(lang, pd),
+            reply_markup=keyboards_core.profile(lang)
         )
-        await query.answer(await messages.payment_success(lang))
+        await query.answer(messages.payment_success(lang))
         logger.info(f'@{user.username} paid for subscription for {rate} months')
     else:
-        await query.answer(await messages.payment_fault(lang))
+        await query.answer(messages.payment_fault(lang))
         logger.info(f'@{user.username} didn\'t pay yet')
