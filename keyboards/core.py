@@ -4,7 +4,7 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from database.models.User import LangTypes
 
 
-async def start(lang: LangTypes) -> InlineKeyboardMarkup:
+def start(lang: LangTypes) -> InlineKeyboardMarkup:
     match lang:
         case LangTypes.RU: texts = ['Создать альбом', 'Создать пластинку', 'Профиль']
         case LangTypes.EN: texts = ['Create album', 'Create vinyl', 'Profile']
@@ -20,7 +20,7 @@ async def start(lang: LangTypes) -> InlineKeyboardMarkup:
     )
 
 
-async def profile(lang: LangTypes) -> InlineKeyboardMarkup:
+def profile(lang: LangTypes) -> InlineKeyboardMarkup:
     match lang:
         case LangTypes.RU: texts = ['Язык', 'Оформить подписку', 'Назад']
         case LangTypes.EN: texts = ['Language', 'Subscribe', 'Back']
@@ -36,7 +36,7 @@ async def profile(lang: LangTypes) -> InlineKeyboardMarkup:
     )
 
 
-async def language() -> InlineKeyboardMarkup:
+def language() -> InlineKeyboardMarkup:
     btn_language_russian = InlineKeyboardButton(text='Русский 🇷🇺', callback_data='language_ru')
     btn_language_english = InlineKeyboardButton(text='English 🇺🇸', callback_data='language_en')
     return InlineKeyboardMarkup(

@@ -1,7 +1,7 @@
 from database.models.User import LangTypes
 
 
-async def subscription_rate(lang: LangTypes) -> str:
+def subscription_rate(lang: LangTypes) -> str:
     match lang:
         case LangTypes.RU:
             return 'Выберите тариф'
@@ -9,7 +9,7 @@ async def subscription_rate(lang: LangTypes) -> str:
             return 'Choose plan'
 
 
-async def subscription_already(lang: LangTypes) -> str:
+def subscription_already(lang: LangTypes) -> str:
     match lang:
         case LangTypes.RU:
             return '✅ Подписка уже оформлена'
@@ -17,7 +17,7 @@ async def subscription_already(lang: LangTypes) -> str:
             return '✅ You are already subscribed'
 
 
-async def subscription_payment_method(lang: LangTypes) -> str:
+def subscription_payment_method(lang: LangTypes) -> str:
     match lang:
         case LangTypes.RU:
             return 'Выберите метод оплаты'
@@ -25,7 +25,7 @@ async def subscription_payment_method(lang: LangTypes) -> str:
             return 'Choose payment method'
 
 
-async def subscription_payment(lang: LangTypes) -> str:
+def subscription_payment(lang: LangTypes) -> str:
     match lang:
         case LangTypes.RU:
             return 'Перейдите по ссылке чтобы оплатить'
@@ -33,7 +33,7 @@ async def subscription_payment(lang: LangTypes) -> str:
             return 'Follow the link to pay'
 
 
-async def payment_fault(lang: LangTypes) -> str:
+def payment_fault(lang: LangTypes) -> str:
     match lang:
         case LangTypes.RU:
             return 'Вы ещё не оплатили ❌'
@@ -41,7 +41,7 @@ async def payment_fault(lang: LangTypes) -> str:
             return 'You haven\'t paid yet ❌'
 
 
-async def payment_success(lang: LangTypes) -> str:
+def payment_success(lang: LangTypes) -> str:
     match lang:
         case LangTypes.RU:
             return 'Спасибо за покупку ✅'

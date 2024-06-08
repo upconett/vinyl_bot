@@ -4,7 +4,7 @@ from aiogram.types import User as AIOgramUser
 from database.models.User import LangTypes
 
 
-async def subscription_rate(lang: LangTypes) -> InlineKeyboardMarkup:
+def subscription_rate(lang: LangTypes) -> InlineKeyboardMarkup:
     match lang:
         case LangTypes.RU:
             texts = ['1 Месяц', '6 Месяцев', '12 Месяцев', 'Назад']
@@ -24,7 +24,7 @@ async def subscription_rate(lang: LangTypes) -> InlineKeyboardMarkup:
     )
     
 
-async def subscription_payment_method(lang: LangTypes) -> InlineKeyboardMarkup:
+def subscription_payment_method(lang: LangTypes) -> InlineKeyboardMarkup:
     match lang:
         case LangTypes.RU: text_back = 'Назад'
         case LangTypes.EN: text_back = 'Back'
@@ -42,7 +42,7 @@ async def subscription_payment_method(lang: LangTypes) -> InlineKeyboardMarkup:
     )
 
 
-async def subscription_payment(lang: LangTypes, payment_link: str) -> InlineKeyboardMarkup:
+def subscription_payment(lang: LangTypes, payment_link: str) -> InlineKeyboardMarkup:
     match lang:
         case LangTypes.RU:
             texts = ['Оплатить', 'Я оплатил ✅', 'Назад']

@@ -4,7 +4,7 @@ from database.models.User import LangTypes
 from database.dataclasses import ProfileData
 
 
-async def start(lang: LangTypes, user: AIOgramUser) -> str:
+def start(lang: LangTypes, user: AIOgramUser) -> str:
     match lang:
         case LangTypes.RU:
             return (
@@ -22,7 +22,7 @@ async def start(lang: LangTypes, user: AIOgramUser) -> str:
             )
 
 
-async def profile(lang: LangTypes, profile_data: ProfileData) -> str:
+def profile(lang: LangTypes, profile_data: ProfileData) -> str:
     pd = profile_data
     match lang:
         case LangTypes.RU:
@@ -45,9 +45,17 @@ async def profile(lang: LangTypes, profile_data: ProfileData) -> str:
             )
 
 
-async def language(lang: LangTypes) -> str:
+def language(lang: LangTypes) -> str:
     match lang:
         case LangTypes.RU:
             return 'Выбери язык'
         case LangTypes.EN:
             return 'Choose language'
+
+
+def template_image_warning(lang: LangTypes) -> str:
+    match lang:
+        case LangTypes.RU:
+            return 'Картинка шаблонов не выставлена!'
+        case LangTypes.EN:
+            return 'Templates image not set!'

@@ -30,8 +30,8 @@ async def message_start(message: Message, state: FSMContext):
     await state.clear()
 
     await message.answer(
-        text=await messages.start(lang, user),
-        reply_markup=await keyboards.start(lang)
+        text=messages.start(lang, user),
+        reply_markup=keyboards.start(lang)
     )
     logger.info(f'@{user.username} started bot')
 
@@ -55,8 +55,8 @@ async def query_start(query: CallbackQuery, state: FSMContext):
         pass
 
     await query.message.answer(
-        text=await messages.start(lang, user),
-        reply_markup=await keyboards.start(lang)
+        text=messages.start(lang, user),
+        reply_markup=keyboards.start(lang)
     )
 
     await state.set_data({})
@@ -73,8 +73,8 @@ async def query_profile(query: CallbackQuery):
 
     pd = await get_profile_data(user)
     await query.message.edit_text(
-        text=await messages.profile(lang, pd),
-        reply_markup=await keyboards.profile(lang)
+        text=messages.profile(lang, pd),
+        reply_markup=keyboards.profile(lang)
     )
     await query.answer()
     logger.info(f'@{user.username} called profile')
@@ -87,8 +87,8 @@ async def query_language(query: CallbackQuery):
     lang = await get_language(user)
 
     await query.message.edit_text(
-        text=await messages.language(lang),
-        reply_markup=await keyboards.language()
+        text=messages.language(lang),
+        reply_markup=keyboards.language()
     )
     await query.answer()
     logger.info(f'@{user.username} called language')
@@ -105,8 +105,8 @@ async def query_language_set(query: CallbackQuery):
 
     pd = await get_profile_data(user)
     await query.message.edit_text(
-        text=await messages.profile(lang, pd),
-        reply_markup=await keyboards.profile(lang)
+        text=messages.profile(lang, pd),
+        reply_markup=keyboards.profile(lang)
     )
 
     await query.answer(answer_text)

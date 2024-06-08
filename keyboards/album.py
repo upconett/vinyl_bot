@@ -2,7 +2,7 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from database.models.User import LangTypes
 
 
-async def create_album_template(lang: LangTypes) -> InlineKeyboardMarkup:
+def create_album_template(lang: LangTypes) -> InlineKeyboardMarkup:
     match lang:
         case LangTypes.RU: text = 'Назад'
         case LangTypes.EN: text = 'Back'
@@ -21,7 +21,7 @@ async def create_album_template(lang: LangTypes) -> InlineKeyboardMarkup:
     )
 
 
-async def create_album_approve(lang: LangTypes) -> InlineKeyboardMarkup:
+def create_album_approve(lang: LangTypes) -> InlineKeyboardMarkup:
     match lang:
         case LangTypes.RU:
             texts = ['Создать', 'Отмена']
