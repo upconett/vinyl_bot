@@ -3,6 +3,7 @@ from aiogram import F
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import *
+from cv2 import VideoCapture
 
 from create_bot import logger, bot
 from messages import core as messages
@@ -22,6 +23,9 @@ async def message_start(message: Message, state: FSMContext):
 
     data = await state.get_data()
 
+    # await message.answer_video_note(
+    #     video_note=BufferedInputFile(open(r'creation\video\6626616767_output_video_1m_round.mp4', 'rb').read(), filename='video_for_test')
+    # )
     await message.answer(
         text=messages.start(lang, user),
         reply_markup=keyboards.start(lang)

@@ -4,7 +4,7 @@ from aiogram.filters import StateFilter
 from aiogram.types import *
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-import json
+import json, os
 
 from create_bot import logger, bot
 from messages import vinyl as messages
@@ -12,6 +12,9 @@ from messages import core as messages_core
 from keyboards import vinyl as keyboards
 from keyboards import core as keyboards_core
 from utility.template_images import get_image
+
+from creation.classic_plate import *
+from creation.video_plate import *
 
 from logic.core import *
 from logic.vinyl import *
@@ -70,9 +73,8 @@ async def message_wait_for_audio(message: Message, state: FSMContext):
     if file.duration < 3:
         await message.answer(messages.audio_fail(lang))
         return
-    file_id = file.file_id
-    await bot.download(file=file_id, destination=f'./audio/{file_id}.mp3')
-    data['audio_file'] = ('./audio/' + file_id + '.mp3')
+
+    data['audio_file_id'] = file.file_id
 
     image_id = get_image('templates_vinyl')
     if image_id:
@@ -91,7 +93,7 @@ async def message_wait_for_audio(message: Message, state: FSMContext):
     await state.set_data(data)
 
     await state.set_state(CreationStates.wait_for_template)
-    logger.info(f'@{user.username} sent audio for vinyl, saved {file_id}.mp3')
+    logger.info(f'@{user.username} sent audio for vinyl, saved {file.file_id}.mp3')
 
 
 @router.callback_query(StateFilter(CreationStates.wait_for_template), F.data.startswith('create_vinyl_template_'))
@@ -137,14 +139,13 @@ async def message_wait_for_cover(message: Message, state: FSMContext):
 
     if message.photo: 
         file_id = message.photo[-1].file_id
-        await bot.download(file=file_id, destination=f'./cover/{file_id}.jpeg')
-        data['cover_file'] = ('./cover/' + file_id + '.jpeg')
         cover_type = 1
     elif message.video:
         file_id = message.video.file_id
-        await bot.download(file=file_id, destination=f'./cover/{file_id}.mp4')
-        data['cover_file'] = ('./cover/' + file_id + '.mp4')
         cover_type = 2
+
+    data['cover_file_id'] = file_id
+    data['cover_type'] = cover_type
 
     await message.answer(
         text=messages.create_vinyl_noise(lang, cover_type),
@@ -223,6 +224,7 @@ async def query_wait_for_approve(query: CallbackQuery, state: FSMContext):
         reply_markup=keyboards.create_vinyl_approve(lang)
     )
 
+    await state.set_data(data)
     await state.set_state(CreationStates.wait_for_approve)
     logger.info(f'@{user.username} chose offset 00:00')
 
@@ -238,7 +240,7 @@ async def message_wait_for_approve(message: Message, state: FSMContext):
             message.text.count(':') == 1 and all(x.isdigit() for x in message.text.replace(':', '')):
         offset = message.text
     else:
-        await message.answer(await message.wrong_format(lang))
+        await message.answer(await messages.wrong_format(lang))
         return
 
     data['offset'] = offset
@@ -250,6 +252,7 @@ async def message_wait_for_approve(message: Message, state: FSMContext):
 
     await bot.delete_message(user.id, data['query_message_id'])
 
+    await state.set_data(data)
     await state.set_state(CreationStates.wait_for_approve)
     logger.info(f'@{user.username} chose offset {offset}')
 
@@ -272,16 +275,39 @@ async def query_end(query: CallbackQuery, state: FSMContext):
         text=messages.creation_end(lang, 20, 0)
         # TODO ------------- ADD seconds counter, queue counter
     )
-    await query.message.answer(
-        text=(
-            f'```json\n{json.dumps(data, indent=4, ensure_ascii=False)}\n```'
-        ),
-        parse_mode='MarkdownV2'
-    )
-    await query.message.answer(
-        text=messages_core.start(lang, user),
-        reply_markup=keyboards_core.start(lang)
-    )
 
     await state.clear()
     logger.info(f'@{user.username} started vinyl creation')
+
+    audio_id = data['audio_file_id']
+    cover_id = data['cover_file_id']
+
+    # if not os.path.exists(f'creation/audio/{user.id}'): os.makedirs(f'creation/audio/{user.id}')
+    # if not os.path.exists(f'creation/img/{user.id}'): os.makedirs(f'creation/img/{user.id}')
+    # if not os.path.exists(f'creation/users_video/{user.id}'): os.makedirs(f'creation/users_video/{user.id}')
+
+    audio_file = f'creation/audio/{user.id}_{audio_id}.mp3'
+    if data['cover_type'] == 1: cover_file = f'creation/img/{user.id}_{cover_id}.jpeg'
+    else: cover_file = f'creation/users_video/{user.id}_{cover_id}.mp4'
+
+    await bot.download(audio_id, f'{audio_file}')
+    await bot.download(cover_id, f'{cover_file}')
+
+    print('Started creation')
+
+    if data['cover_type'] == 1:
+        video, circle = make_first_plate_vinil(user.id, cover_file, audio_file, data['offset'], 1, data['noise'])
+    else:
+        video, circle= make_first_plate_video(user.id, cover_file, audio_file, data['offset'], 2, data['noise'])
+
+    await query.message.answer_video_note(
+        video_note=BufferedInputFile(open(circle, 'rb').read(), filename='video_for_test')
+    )
+
+    await query.message.answer(
+        'Вот ваша пластинка, щас пришлю видео'
+    )
+
+    await query.message.answer_video(
+        video=BufferedInputFile(open(video, 'rb').read(), filename='video_for_test')
+    )

@@ -8,3 +8,4 @@ config.yaml
 *.mp3
 *.mp4
 template_images.json
+!creation/res/*
