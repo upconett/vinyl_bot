@@ -14,6 +14,7 @@ from keyboards import core as keyboards_core
 from utility.template_images import get_image
 
 from logic.core import *
+from logic.album import *
 
 
 router = Router(name='album')
@@ -33,6 +34,10 @@ async def query_create_album(query: CallbackQuery, state: FSMContext):
     await update_user(user)
     lang = await get_language(user)
     data = await state.get_data()
+
+    if not await check_sub_or_free_albums(user):
+        await query.answer(messages.no_free_albums(lang), show_alert=True)
+        return
 
     image_id = get_image('templates_album')
     if image_id:
@@ -158,22 +163,28 @@ async def query_wait_for_approve(query: CallbackQuery, state: FSMContext):
     lang = await get_language(user)
     data = await state.get_data()
 
+    if not await check_sub(user):
+        if await check_free_albums(user):
+            await use_free_albums(user)
+        else:
+            await query.answer(messages.no_free_albums(lang), show_alert=True)
+            return
+
     await query.message.edit_text(
         text=messages.creation_end(lang, 20, 0),
-        reply_markup=None
+        reply_markup=keyboards_core.go_back(lang)
     )
 
     await query.message.answer(
-        text=(
-            f'```json\n{json.dumps(data, indent=4, ensure_ascii=False)}\n```'
-        ),
-        parse_mode='MarkdownV2'
+        text='Создание альбомов пока не готово 🛠️'
     )
 
-    await query.message.answer(
-        text=messages_core.start(lang, user),
-        reply_markup=keyboards_core.start(lang)
-    )
+    # await query.message.answer(
+    #     text=(
+    #         f'```json\n{json.dumps(data, indent=4, ensure_ascii=False)}\n```'
+    #     ),
+    #     parse_mode='MarkdownV2'
+    # )
 
     await state.clear()
     logger.info(f'@{user.username} started album creation')
