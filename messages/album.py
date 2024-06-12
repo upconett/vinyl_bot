@@ -87,3 +87,11 @@ def creation_end(lang: LangTypes, time: int, queue: int):
                 f'Excellent, wait {time} seconds and your album will be ready\n'
                 f'It\'s {queue} people in queue before you'
             )
+
+
+def no_free_albums(lang: LangTypes):
+    match lang:
+        case LangTypes.RU:
+            return '🌠 Подпишитесь, чтобы создать новые альбомы'
+        case LangTypes.EN:
+            return '🌠 Subscribe to create new albums'

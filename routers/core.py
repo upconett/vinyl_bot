@@ -4,7 +4,7 @@ from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import *
 
-from create_bot import logger, bot, vm
+from create_bot import logger, bot
 from messages import core as messages
 from keyboards import core as keyboards
 
