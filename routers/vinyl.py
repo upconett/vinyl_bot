@@ -13,8 +13,7 @@ from keyboards import vinyl as keyboards
 from keyboards import core as keyboards_core
 from utility.template_images import get_image
 
-from creation.classic_plate import *
-from creation.video_plate import *
+from creation.asyncio import make_classic_vinyl, make_video_vinyl
 
 from logic.core import *
 from logic.vinyl import *
@@ -282,10 +281,6 @@ async def query_end(query: CallbackQuery, state: FSMContext):
     audio_id = data['audio_file_id']
     cover_id = data['cover_file_id']
 
-    # if not os.path.exists(f'creation/audio/{user.id}'): os.makedirs(f'creation/audio/{user.id}')
-    # if not os.path.exists(f'creation/img/{user.id}'): os.makedirs(f'creation/img/{user.id}')
-    # if not os.path.exists(f'creation/users_video/{user.id}'): os.makedirs(f'creation/users_video/{user.id}')
-
     audio_file = f'creation/audio/{user.id}_{audio_id}.mp3'
     if data['cover_type'] == 1: cover_file = f'creation/img/{user.id}_{cover_id}.jpeg'
     else: cover_file = f'creation/users_video/{user.id}_{cover_id}.mp4'
@@ -296,9 +291,10 @@ async def query_end(query: CallbackQuery, state: FSMContext):
     print('Started creation')
 
     if data['cover_type'] == 1:
-        video, circle = make_first_plate_vinil(user.id, cover_file, audio_file, data['offset'], 1, data['noise'])
+        video, circle = await make_classic_vinyl(user.id, cover_file, audio_file, data['offset'], 1, data['noise'])
     else:
-        video, circle= make_first_plate_video(user.id, cover_file, audio_file, data['offset'], 2, data['noise'])
+        video, circle = await make_video_vinyl(user.id, cover_file, audio_file, data['offset'], 2, data['noise'])
+        pass
 
     await query.message.answer_video_note(
         video_note=BufferedInputFile(open(circle, 'rb').read(), filename='video_for_test')
