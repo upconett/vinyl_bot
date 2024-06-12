@@ -47,3 +47,11 @@ def payment_success(lang: LangTypes) -> str:
             return 'Спасибо за покупку ✅'
         case LangTypes.EN:
             return 'Thank you for your purchase ✅'
+
+    
+def stars_todo(lang: LangTypes) -> str:
+    match lang:
+        case LangTypes.RU:
+            return '⭐ TG Stars скоро...'
+        case LangTypes.EN:
+            return '⭐ TG Stars soon...'

@@ -39,7 +39,7 @@ async def query_create_vinyl(query: CallbackQuery, state: FSMContext):
     lang = await get_language(user)
 
     if not await check_sub_or_free_vinyl(user):
-        await query.answer(messages.no_free_vinyl(lang))
+        await query.answer(messages.no_free_vinyl(lang), show_alert=True)
         return
 
     await state.set_state(CreationStates.wait_for_audio)
@@ -267,11 +267,12 @@ async def query_end(query: CallbackQuery, state: FSMContext):
         if await check_free_vinyl(user):
             await use_free_vinyl(user)
         else:
-            await query.answer(messages.no_free_vinyl(lang))
+            await query.answer(messages.no_free_vinyl(lang), show_alert=True)
             return
 
     await query.message.edit_text(
-        text=messages.creation_end(lang, 20, 0)
+        text=messages.creation_end(lang, 20, 0),
+        reply_markup=keyboards_core.go_back(lang)
         # TODO ------------- ADD seconds counter, queue counter
     )
 

@@ -47,3 +47,16 @@ def language() -> InlineKeyboardMarkup:
     )
 
 
+
+def go_back(lang: LangTypes) -> InlineKeyboardMarkup:
+    match lang:
+        case LangTypes.RU:
+            text = 'Вернуться'
+        case LangTypes.EN:
+            text = 'Go back'
+    btn_back = InlineKeyboardButton(text=text, callback_data='start')
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [btn_back]
+        ]
+    )
