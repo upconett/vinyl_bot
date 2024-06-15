@@ -59,3 +59,11 @@ def template_image_warning(lang: LangTypes) -> str:
             return 'Картинка шаблонов не выставлена!'
         case LangTypes.EN:
             return 'Templates image not set!'
+
+
+def error(lang: LangTypes) -> str:
+    match lang:
+        case LangTypes.RU:
+            return 'Произошла какая-то ошибка 🤕\nПобробуйте позже'
+        case LangTypes.EN:
+            return 'Some error occured 🤕\nTry again later'

@@ -12,4 +12,4 @@ if not inspect(engine).has_table('users'):
     Base.metadata.create_all(engine)
 engine.dispose()
 
-async_engine = create_async_engine("sqlite+aiosqlite:///{0}".format(dbfile), echo=True)
+async_engine = create_async_engine("sqlite+aiosqlite:///{0}".format(dbfile))
