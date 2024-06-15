@@ -123,3 +123,43 @@ def creation_end(lang: LangTypes, time: int, queue: int):
                 f'Super, wait {time} seconds for your record to be ready\n'
                 f'It\'s {queue} people in queue before you'
             )
+
+
+def record_missing(lang: LangTypes):
+    match lang:
+        case LangTypes.RU:
+            return 'Ваша пластинка уже удалена'
+        case LangTypes.EN:
+            return 'Your record is already deleted'
+
+
+def get_player(lang: LangTypes):
+    match lang:
+        case LangTypes.RU:
+            return (
+                'Вы можете скачать пластинку в хорошем качестве\n\n'
+                'Мы храним ваши пластинки 24 часа\n'
+                'После этого скачать её не получится'
+            )
+        case LangTypes.EN:
+            return (
+                'You can download the record in better quality\n\n'
+                'We store your records for 24 hours\n'
+                'You won\'t be able to donwload the record after that'
+            )
+
+        
+def player_types(lang: LangTypes):
+    match lang:
+        case LangTypes.RU:
+            return 'Выберите шаблон проигрывателя для вашей пластинки'
+        case LangTypes.EN:
+            return 'Choose record player template to download'
+
+
+def player_done(lang: LangTypes):
+    match lang:
+        case LangTypes.RU:
+            return 'Ваш проигрыватель готов ✅'
+        case LangTypes.EN:
+            return 'Your record player ready ✅'

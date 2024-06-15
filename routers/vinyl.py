@@ -13,7 +13,7 @@ from keyboards import vinyl as keyboards
 from keyboards import core as keyboards_core
 from utility.template_images import get_image
 
-from creation.asyncio import make_classic_vinyl, make_video_vinyl
+from creation.asyncio import make_classic_vinyl, make_video_vinyl, make_player_vinyl
 
 from logic.core import *
 from logic.vinyl import *
@@ -29,6 +29,7 @@ class CreationStates(StatesGroup):
     wait_for_speed = State()
     wait_for_offset = State()
     wait_for_approve = State()
+    wait_for_player = State()
 
 
 
@@ -192,7 +193,7 @@ async def query_wait_for_speed(query: CallbackQuery, state: FSMContext):
     lang = await get_language(user)
     data = await state.get_data()
 
-    speed = query.data.replace('create_vinyl_speed_', '')
+    speed = int(query.data.replace('create_vinyl_speed_', ''))
 
     data['speed'] = speed
 
@@ -291,20 +292,74 @@ async def query_end(query: CallbackQuery, state: FSMContext):
 
     print('Started creation')
 
-    if data['cover_type'] == 1:
-        video, circle = await make_classic_vinyl(user.id, cover_file, audio_file, data['offset'], 1, data['noise'])
-    else:
-        video, circle = await make_video_vinyl(user.id, cover_file, audio_file, data['offset'], 2, data['noise'])
-        pass
+    try:
+        if data['cover_type'] == 1:
+            video, circle = await make_classic_vinyl(user.id, cover_file, audio_file, data['template'], data['offset'], data['speed'], data['noise'])
+        else:
+            video, circle = await make_video_vinyl(user.id, cover_file, audio_file, data['template'], data['offset'], data['speed'], data['noise'])
 
-    await query.message.answer_video_note(
-        video_note=BufferedInputFile(open(circle, 'rb').read(), filename='video_for_test')
-    )
+        await state.set_data(data)
 
-    await query.message.answer(
-        'Вот ваша пластинка, щас пришлю видео'
-    )
+        await query.message.answer_video_note(
+            video_note=BufferedInputFile(open(circle, 'rb').read(), filename='video_for_test')
+        )
+        await query.message.answer(
+            text=messages.get_player(lang),
+            reply_markup=keyboards.get_player(lang, video)
+        )
+    except:
+        await query.message.answer(messages_core.error(lang))
+        await state.clear()
 
-    await query.message.answer_video(
-        video=BufferedInputFile(open(video, 'rb').read(), filename='video_for_test')
+
+@router.callback_query(F.data.startswith('get_player_'))
+async def query_get_player(query: CallbackQuery, state: FSMContext):
+    user = query.from_user
+    await update_user(user)
+    lang = await get_language(user)
+    data = await state.get_data()
+
+    unique_id = query.data.replace('get_player_', '')
+    video_path = fr'creation/video/{user.id}_{unique_id}_output_video.mp4'
+
+    if not os.path.exists(video_path):
+        await query.answer(messages.record_missing(lang), show_alert=True)
+        await query.message.delete()
+        return
+
+    data['unique_id'] = unique_id
+
+    await query.message.edit_text(
+        text=messages.player_types,
+        reply_markup=keyboards.player_types
     )
+    await query.answer()
+
+    await state.set_data(data)
+    state.set_state(CreationStates.wait_for_player)
+
+
+@router.callback_query(StateFilter(CreationStates.wait_for_player), F.data.startswith('player_template_'))
+async def query_get_player_template(query: CallbackQuery, state: FSMContext):
+    user = query.from_user
+    await update_user(user)
+    lang = await get_language(user)
+    data = await state.get_data()
+
+    template = int(query.data.replace('player_template_', ''))
+    unique_id = data['unique_id']
+
+    try:
+        video = await make_player_vinyl(user.id, unique_id, template)
+
+        await query.message.answer_video(
+            video=video,
+            caption=messages.player_done(lang),
+            reply_markup=keyboards_core.go_back(lang)
+        )
+        await state.clear()
+
+    except Exception as e:
+        print(e)
+        await query.message.answer(messages_core.error(lang))
+        return

@@ -1,7 +1,9 @@
 import os
 import subprocess
 import datetime
-'''Скрипт для создание пластинки №2 НО С ВИДЕО В ЦЕНТРЕ'''
+
+'''Скрипт для создание пластинки №3 НО С ВИДЕО В ЦЕНТРЕ'''
+
 
 def get_video_duration(video_path):
     result = subprocess.run(
@@ -42,8 +44,8 @@ def cut_audio(user_id, audio_path, start_time):
 
 
 @time_count
-def crop_video_and_rotate(user_id, video_path, speed):
-    '''Делаем видео 1 мин и Вырезаем квадрат из видео и аудио накладываем'''
+def crop_video(user_id, video_path):
+    '''Делаем видео 1 мин и Вырезаем квадрат из видео'''
     duration = get_video_duration(video_path)
     if duration > 60:
         command = [
@@ -58,14 +60,9 @@ def crop_video_and_rotate(user_id, video_path, speed):
             f'creation/video/{user_id}_1min.mp4'
         ]
 
-        subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)  # Обрезаем видео до 60сек если оно длиньше
         os.remove(video_path)
         video_path = f'creation/video/{user_id}_1min.mp4'
-
-    if speed == 1:
-        speed = 8
-    elif speed == 2:
-        speed = 60
     command = [
         'ffmpeg',
         '-y',
@@ -73,18 +70,25 @@ def crop_video_and_rotate(user_id, video_path, speed):
         '-frames:v', '1',
         f'creation/img/{user_id}_first_cadr.png'
     ]
-    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)  # Делаем первый кадр для проигрывателя
     command = [
         'ffmpeg',
         '-y',
         '-i', video_path,
-        '-vf', "crop='min(iw,ih):min(iw,ih)',scale=1500:1500,format=yuv420p",
+        '-loop', '1',
+        '-i', 'creation/res/paper_overlay_small.png',
+        '-i', 'creation/res/light2.png',
+        '-filter_complex',
+        """
+        [0:v]crop='min(iw,ih):min(iw,ih)',scale=1500:1500,format=yuv420p[base];
+        [1:v]setsar=1[overlay1];
+        [base][overlay1]blend=all_mode='overlay':repeatlast=0[temp1];
+        [temp1][2:v]overlay=W-w-0:H-h-0
+        """,
         '-c:v', 'libx264',
-        '-crf', '23',
-        '-preset', 'ultrafast',
         f'creation/video/{user_id}_crop_video.mp4'
     ]
-    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)  # Накладываем текстуру и свет
     os.remove(video_path)
     if duration < 60:
         command = [
@@ -98,98 +102,118 @@ def crop_video_and_rotate(user_id, video_path, speed):
             '-threads', 'auto',
             f'creation/video/{user_id}_looped.mp4'
         ]
-        subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)  # Если видео меньше минуты зацикливаем
         os.remove(f'creation/video/{user_id}_crop_video.mp4')
         os.rename(f'creation/video/{user_id}_looped.mp4', f'creation/video/{user_id}_crop_video.mp4')
+
+    return f'creation/video/{user_id}_crop_video.mp4'
+
+
+@time_count
+def rotate_vinil(user_id, video_path, speed):
+    '''Заставляем крутиться'''
+
+    if speed == 1:
+        speed = 8
+    elif speed == 2:
+        speed = 60
     command = [
         'ffmpeg',
         '-y',
-        '-i', f'creation/video/{user_id}_crop_video.mp4',
-        '-vf', f"rotate=2*PI*t/{speed}",
+        '-i', video_path,
+        '-vf', f"rotate=2*PI*t/{speed}:c=black@0:ow=ih:oh=ih",
         '-pix_fmt', 'yuv420p',
         '-vcodec', 'libx264',
         f'creation/video/{user_id}_rotate_vinil.mp4'
     ]
     subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    os.remove(f'creation/video/{user_id}_crop_video.mp4')
-    command = [
-        'ffmpeg',
-        '-y',
-        '-i', 'creation/res/black.png',
-        '-i', f'creation/video/{user_id}_rotate_vinil.mp4',
-        '-i', 'creation/res/mask.png',
-        '-filter_complex',
-        "[1:v][2:v]alphamerge[masked]; [0:v][masked]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2:format=auto,format=yuv420p[v]",
-        '-map', '[v]',
-        '-c:v', 'libx264',
-        '-shortest',
-        f'creation/video/{user_id}_round_video.mp4'
-    ]
-
-    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    os.remove(f'creation/video/{user_id}_rotate_vinil.mp4')
-    return f'creation/video/{user_id}_round_video.mp4'
+    os.remove(video_path)
+    return f'creation/video/{user_id}_rotate_vinil.mp4'
 
 
 @time_count
 def make_video(user_id, video_path, audio_path, noise):
-    '''Вставляем тень и иголку и аудио'''
+    '''Заворачиваем в видео'''
     command = [
         'ffmpeg',
         '-y',
+        '-loop', '1',
+        '-i', 'creation/res/black.png',
         '-i', video_path,
+        '-i', 'creation/res/mask.png',
         '-i', audio_path,
-        '-c:v', 'copy',
+        '-filter_complex',
+        "[1:v][2:v]alphamerge[masked]; [0:v][masked]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2:format=auto,format=yuv420p[v]",
+        '-map', '[v]',
+        '-map', '3:a',
+        '-c:v', 'libx264',
         '-c:a', 'aac',
-        '-strict', 'experimental',
         '-shortest',
-        f'creation/video/{user_id}_video_audio.mp4'
+        f'creation/video/{user_id}_round_video.mp4'
     ]
-    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)  # Накладываем на черный фон по маске и аудио
     os.remove(video_path)
     os.remove(audio_path)
-    if noise:
+    if noise:  # Накладываем шум если надо
         command = [
             'ffmpeg',
             '-y',
-            '-i', f'creation/video/{user_id}_video_audio.mp4',
+            '-i', f'creation/video/{user_id}_round_video.mp4',
             '-i', 'creation/res/vinil_audio.mp3',
             '-filter_complex', '[1:a]volume=0.15[a1]; [0:a][a1]amix=inputs=2:duration=first',
             '-c:v', 'copy',
             f'creation/video/{user_id}_output_video_noise.mp4'
         ]
         subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        os.remove(f'creation/video/{user_id}_video_audio.mp4')
-        os.rename(f'creation/video/{user_id}_output_video_noise.mp4', f'creation/video/{user_id}_video_audio.mp4')
+        os.remove(f'creation/video/{user_id}_round_video.mp4')
+        os.rename(f'creation/video/{user_id}_output_video_noise.mp4', f'creation/video/{user_id}_round_video.mp4')
 
     command = [
         'ffmpeg',
         '-y',
-        '-i', f'creation/video/{user_id}_video_audio.mp4',
-        '-i', 'creation/res/needle-min.png',
-        '-i', 'creation/res/light-min.png',
+        '-i', f'creation/video/{user_id}_round_video.mp4',
+        '-i', 'creation/res/2light-min.png',
         '-filter_complex',
-        "[0][1]overlay=W-w-0:H-h-0[tmp1];[tmp1][2]overlay=W-w-0:H-h-0[v]",
-        '-map', '[v]',
-        '-map', '0:a',
+        """
+        [0:v][1:v]overlay=x=0:y=0
+        """,
+        '-c:v', 'libx264',
+        '-c:a', 'copy',
+        f'creation/video/{user_id}_output_video_temp.mp4'
+    ]
+    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)  # Накладываем свет
+    os.remove(f'creation/video/{user_id}_round_video.mp4')
+    command = [
+        'ffmpeg',
+        '-y',
+        '-i', f'creation/video/{user_id}_output_video_temp.mp4',
+        '-i', 'creation/res/put2.png',
+        '-filter_complex',
+        """
+        [0:v][1:v]overlay=x=0:y=0,scale=640:640
+        """,
+        '-c:v', 'libx264',
+        '-c:a', 'aac',
+        '-crf', '32',
+        '-preset', 'veryslow',
+        f'creation/video/{user_id}_output_video_1m_round.mp4'
+    ]
+    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)  # Накладываем гвоздик и приводим в формат кружка
+    command = [
+        'ffmpeg',
+        '-y',
+        '-i', f'creation/video/{user_id}_output_video_temp.mp4',
+        '-i', 'creation/res/put.png',
+        '-filter_complex',
+        """
+        [0:v][1:v]overlay=x=0:y=0
+        """,
         '-c:v', 'libx264',
         '-c:a', 'copy',
         f'creation/video/{user_id}_output_video.mp4'
     ]
-    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    os.remove(f'creation/video/{user_id}_video_audio.mp4')
-    command = [
-        'ffmpeg',
-        '-y',
-        '-i', f'creation/video/{user_id}_output_video.mp4',
-        '-vf', 'scale=640:640',
-        '-c:v', 'libx264',
-        '-c:a', 'aac',
-        '-preset', 'slow',
-        '-crf', '28',
-        f'creation/video/{user_id}_output_video_1m_round.mp4'
-    ]
-    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)  # Накладываем другой гвоздик для проигрывателя
+    os.remove(f'creation/video/{user_id}_output_video_temp.mp4')
     try: os.remove(f'creation/img/{user_id}_first_cadr.png')
     except: pass
     try: os.remove(f'creation/img/{user_id}_scale.png')
