@@ -17,9 +17,9 @@ def make_background_video(user_id, video_path):
         "ffmpeg",
         "-y",
         "-loop", "1",
-        "-i", "res/player_black.png",
+        "-i", "creation/res/player_black.png",
         "-i", video_path,
-        "-i", "res/mask.png",
+        "-i", "creation/res/mask.png",
         "-filter_complex",
         "[1:v]scale=720:720,setsar=1[vid_resized]; [2:v]scale=720:720[mask_resized]; [vid_resized][mask_resized]alphamerge[masked]; [0:v][masked]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2:format=auto,format=yuv420p[v]",
         "-map", "[v]",
@@ -27,10 +27,10 @@ def make_background_video(user_id, video_path):
         "-c:v", "libx264",
         "-c:a", "copy",
         "-shortest",
-        f"video/{user_id}_player_back.mp4"
+        f"creation/video/{user_id}_player_back.mp4"
     ]
     subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    return f"video/{user_id}_player_back.mp4"
+    return f"creation/video/{user_id}_player_back.mp4"
 @time_count
 def paste_needle(user_id, video_path):
     # 04fc44
@@ -43,6 +43,7 @@ def paste_needle(user_id, video_path):
         '-c:v', 'libx264',  # Кодек для выходного видео
         '-crf', '23',  # Качество видео
         '-preset', 'fast',  # Пресет кодирования
+        '-shortest',
         f'creation/video/{user_id}_player2.mp4'  # Выходной файл
     ]
     subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

@@ -102,7 +102,7 @@ def create_vinyl_approve(lang: LangTypes) -> InlineKeyboardMarkup:
     )
 
 
-def get_player(lang: LangTypes, unique_id: str) -> InlineKeyboardMarkup:
+def get_player(lang: LangTypes, unique_id: int) -> InlineKeyboardMarkup:
     match lang:
         case LangTypes.RU:
             text = 'Скачать 💽'
@@ -116,11 +116,11 @@ def get_player(lang: LangTypes, unique_id: str) -> InlineKeyboardMarkup:
     )
 
 
-def player_types() -> InlineKeyboardMarkup:
+def player_types(unique_id: int) -> InlineKeyboardMarkup:
     buttons_choice = [
         InlineKeyboardButton(
             text=f'{x}', 
-            callback_data=f'player_template_{x}'
+            callback_data=f'player_template_{unique_id}_{x}'
         ) for x in range(1, 4)
     ]
     return InlineKeyboardMarkup(

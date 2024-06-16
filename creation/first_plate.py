@@ -132,8 +132,4 @@ def cut_image(user_id, photo_path, video_vinil, speed, noise):
         f'creation/video/{user_id}_output_video_1m_round.mp4'
     ]
     subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)  # Тут делаем видео для кружка
-    try: os.remove(f'creation/img/{user_id}_first_cadr.png')
-    except: pass
-    try: os.remove(f'creation/img/{user_id}_scale.png')
-    except: pass
     return (f'creation/video/{user_id}_output_video.mp4', f'creation/video/{user_id}_output_video_1m_round.mp4')

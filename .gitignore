@@ -7,5 +7,6 @@ config.yaml
 *.jpeg
 *.mp3
 *.mp4
+*.png
 template_images.json
 !creation/res/*

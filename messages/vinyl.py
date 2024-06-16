@@ -156,6 +156,14 @@ def player_types(lang: LangTypes):
         case LangTypes.EN:
             return 'Choose record player template to download'
 
+        
+def player_get_ready(lang: LangTypes):
+    match lang:
+        case LangTypes.RU:
+            return 'Ваш проигрыватель скоро будет готов ⌛'
+        case LangTypes.EN:
+            return 'Your record player will be ready soon ⌛'
+
 
 def player_done(lang: LangTypes):
     match lang:
@@ -163,3 +171,27 @@ def player_done(lang: LangTypes):
             return 'Ваш проигрыватель готов ✅'
         case LangTypes.EN:
             return 'Your record player ready ✅'
+
+
+def vinyl_query_block(lang: LangTypes):
+    match lang:
+        case LangTypes.RU:
+            return 'Подождите пока завершится создание другой вашей пластинки ⌛' 
+        case LangTypes.EN:
+            return 'Wait for your other record to be ready ⌛'
+
+
+def player_query_block(lang: LangTypes):
+    match lang:
+        case LangTypes.RU:
+            return 'Подождите пока завершится создание другого вашего проигрывателя ⌛' 
+        case LangTypes.EN:
+            return 'Wait for your other record player to be ready ⌛'
+
+
+def too_big_video(lang: LangTypes):
+    match lang:
+        case LangTypes.RU:
+            return 'Размер видео не должен привышать 10Мб\nПришлите, пожалуйста, другое видео или фото'
+        case LangTypes.EN:
+            return 'Video size can\'t be more than 10Mb\nPlease, send another video or photo'
