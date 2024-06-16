@@ -119,4 +119,4 @@ def paste_needle(user_id, video_path):
         f'creation/video/{user_id}_player3.mp4']
     subprocess.run(command)
     os.remove(video_path)
-    return f'creation/img/{user_id}_player3.png'
+    return f'creation/video/{user_id}_player3.mp4'

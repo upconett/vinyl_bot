@@ -6,14 +6,14 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 import json, os
 
-from create_bot import logger, bot
+from create_bot import logger, bot, cm
 from messages import vinyl as messages
 from messages import core as messages_core
 from keyboards import vinyl as keyboards
 from keyboards import core as keyboards_core
 from utility.template_images import get_image
 
-from creation.asyncio import make_classic_vinyl, make_video_vinyl, make_player_vinyl
+from creation.asyncio import get_unique_id, make_classic_vinyl, make_video_vinyl, make_player_vinyl
 
 from logic.core import *
 from logic.vinyl import *
@@ -41,6 +41,10 @@ async def query_create_vinyl(query: CallbackQuery, state: FSMContext):
 
     if not await check_sub_or_free_vinyl(user):
         await query.answer(messages.no_free_vinyl(lang), show_alert=True)
+        return
+        
+    if cm.in_vinyl_queue(user.id):
+        await query.answer(messages.vinyl_query_block(lang), show_alert=True)
         return
 
     await state.set_state(CreationStates.wait_for_audio)
@@ -141,6 +145,9 @@ async def message_wait_for_cover(message: Message, state: FSMContext):
         file_id = message.photo[-1].file_id
         cover_type = 1
     elif message.video:
+        if message.video.file_size > 1_048_576: # 10MB
+            await message.answer(messages.too_big_video(lang))
+            return
         file_id = message.video.file_id
         cover_type = 2
 
@@ -271,6 +278,12 @@ async def query_end(query: CallbackQuery, state: FSMContext):
             await query.answer(messages.no_free_vinyl(lang), show_alert=True)
             return
 
+    if cm.in_vinyl_queue(user.id):
+        await query.answer(messages.vinyl_query_block(lang), show_alert=True)
+        return
+    else:
+        cm.queue_vinyl_add(user.id)
+
     await query.message.edit_text(
         text=messages.creation_end(lang, 20, 0),
         reply_markup=keyboards_core.go_back(lang)
@@ -293,11 +306,13 @@ async def query_end(query: CallbackQuery, state: FSMContext):
     print('Started creation')
 
     try:
+        unique_id = get_unique_id()
         if data['cover_type'] == 1:
-            video, circle = await make_classic_vinyl(user.id, cover_file, audio_file, data['template'], data['offset'], data['speed'], data['noise'])
+            video, circle = await make_classic_vinyl(unique_id, cover_file, audio_file, data['template'], data['offset'], data['speed'], data['noise'])
         else:
-            video, circle = await make_video_vinyl(user.id, cover_file, audio_file, data['template'], data['offset'], data['speed'], data['noise'])
+            video, circle = await make_video_vinyl(unique_id, cover_file, audio_file, data['template'], data['offset'], data['speed'], data['noise'])
 
+        data['unique_id'] = unique_id
         await state.set_data(data)
 
         await query.message.answer_video_note(
@@ -305,11 +320,12 @@ async def query_end(query: CallbackQuery, state: FSMContext):
         )
         await query.message.answer(
             text=messages.get_player(lang),
-            reply_markup=keyboards.get_player(lang, video)
+            reply_markup=keyboards.get_player(lang, unique_id)
         )
     except:
         await query.message.answer(messages_core.error(lang))
         await state.clear()
+    cm.queue_vinyl_rem(user.id)
 
 
 @router.callback_query(F.data.startswith('get_player_'))
@@ -317,49 +333,55 @@ async def query_get_player(query: CallbackQuery, state: FSMContext):
     user = query.from_user
     await update_user(user)
     lang = await get_language(user)
-    data = await state.get_data()
+    data = await state.get_data() 
 
     unique_id = query.data.replace('get_player_', '')
-    video_path = fr'creation/video/{user.id}_{unique_id}_output_video.mp4'
+    video_path = fr'creation/video/{unique_id}_output_video.mp4'
 
     if not os.path.exists(video_path):
         await query.answer(messages.record_missing(lang), show_alert=True)
         await query.message.delete()
         return
 
-    data['unique_id'] = unique_id
+    if cm.in_player_queue(user.id):
+        await query.answer(messages.player_query_block(lang), show_alert=True)
+        return
 
     await query.message.edit_text(
-        text=messages.player_types,
-        reply_markup=keyboards.player_types
+        text=messages.player_types(lang),
+        reply_markup=keyboards.player_types(unique_id)
     )
     await query.answer()
 
-    await state.set_data(data)
-    state.set_state(CreationStates.wait_for_player)
 
-
-@router.callback_query(StateFilter(CreationStates.wait_for_player), F.data.startswith('player_template_'))
-async def query_get_player_template(query: CallbackQuery, state: FSMContext):
+@router.callback_query(F.data.startswith('player_template_'))
+async def query_get_player_template(query: CallbackQuery):
     user = query.from_user
     await update_user(user)
     lang = await get_language(user)
-    data = await state.get_data()
 
-    template = int(query.data.replace('player_template_', ''))
-    unique_id = data['unique_id']
+    unique_id, template = map(int, query.data.replace('player_template_', '').split('_'))
+    
+    if cm.in_player_queue(user.id):
+        await query.answer(messages.player_query_block(lang), show_alert=True)
+        return
+
+    cm.queue_player_add(user.id)
+
+    await query.message.edit_text(
+        text=messages.player_get_ready(lang),
+        reply_markup=keyboards_core.go_back(lang)
+    )
 
     try:
-        video = await make_player_vinyl(user.id, unique_id, template)
+        video = await make_player_vinyl(unique_id, template)
 
         await query.message.answer_video(
-            video=video,
-            caption=messages.player_done(lang),
-            reply_markup=keyboards_core.go_back(lang)
+            video=BufferedInputFile(open(video, 'rb').read(), filename='player for you'),
+            caption=messages.player_done(lang)
         )
-        await state.clear()
-
+        await query.answer()
     except Exception as e:
         print(e)
         await query.message.answer(messages_core.error(lang))
-        return
+    cm.queue_player_rem(user.id)

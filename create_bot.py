@@ -1,4 +1,5 @@
 from yoomoney import Client
+from creation.CreationManager import CreationManager
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 
@@ -22,6 +23,8 @@ try:
     yoomoney_token: str = data['yoomoney_token']
     yoomoney_client = Client(yoomoney_token)
     yoomoney_info = yoomoney_client.account_info()
+
+    cm = CreationManager()
 
 
 except NoConfigFile:
