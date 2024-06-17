@@ -12,6 +12,7 @@ from messages import core as messages_core
 from keyboards import vinyl as keyboards
 from keyboards import core as keyboards_core
 from utility.template_images import get_image
+from creation.CreationManager import Vinyl, Player, VinylTypes
 
 from creation.asyncio import get_unique_id, make_classic_vinyl, make_video_vinyl, make_player_vinyl
 
@@ -145,7 +146,8 @@ async def message_wait_for_cover(message: Message, state: FSMContext):
         file_id = message.photo[-1].file_id
         cover_type = 1
     elif message.video:
-        if message.video.file_size > 1_048_576: # 10MB
+        if message.video.file_size > 1_048_576 * 10: # 10MB
+            print(message.video.file_size)
             await message.answer(messages.too_big_video(lang))
             return
         file_id = message.video.file_id
@@ -281,8 +283,6 @@ async def query_end(query: CallbackQuery, state: FSMContext):
     if cm.in_vinyl_queue(user.id):
         await query.answer(messages.vinyl_query_block(lang), show_alert=True)
         return
-    else:
-        cm.queue_vinyl_add(user.id)
 
     await query.message.edit_text(
         text=messages.creation_end(lang, 20, 0),
@@ -307,10 +307,8 @@ async def query_end(query: CallbackQuery, state: FSMContext):
 
     try:
         unique_id = get_unique_id()
-        if data['cover_type'] == 1:
-            video, circle = await make_classic_vinyl(unique_id, cover_file, audio_file, data['template'], data['offset'], data['speed'], data['noise'])
-        else:
-            video, circle = await make_video_vinyl(unique_id, cover_file, audio_file, data['template'], data['offset'], data['speed'], data['noise'])
+        type = VinylTypes.PHOTO if data['cover_type'] == 1 else VinylTypes.VIDEO
+        video, circle = await cm.createVinyl(Vinyl(user.id, unique_id, data['template'], type, audio_file, cover_file, data['offset'], data['speed'], data['noise']))
 
         data['unique_id'] = unique_id
         await state.set_data(data)
@@ -322,10 +320,10 @@ async def query_end(query: CallbackQuery, state: FSMContext):
             text=messages.get_player(lang),
             reply_markup=keyboards.get_player(lang, unique_id)
         )
-    except:
+    except Exception as e:
+        print(e)
         await query.message.answer(messages_core.error(lang))
         await state.clear()
-    cm.queue_vinyl_rem(user.id)
 
 
 @router.callback_query(F.data.startswith('get_player_'))
@@ -366,22 +364,17 @@ async def query_get_player_template(query: CallbackQuery):
         await query.answer(messages.player_query_block(lang), show_alert=True)
         return
 
-    cm.queue_player_add(user.id)
-
     await query.message.edit_text(
         text=messages.player_get_ready(lang),
         reply_markup=keyboards_core.go_back(lang)
     )
 
-    try:
-        video = await make_player_vinyl(unique_id, template)
+    # try:
 
-        await query.message.answer_video(
-            video=BufferedInputFile(open(video, 'rb').read(), filename='player for you'),
-            caption=messages.player_done(lang)
-        )
-        await query.answer()
-    except Exception as e:
-        print(e)
-        await query.message.answer(messages_core.error(lang))
-    cm.queue_player_rem(user.id)
+    #     # await query.message.answer_video(
+    #     #     video=BufferedInputFile(open(, 'rb').read(), filename='player for you'),
+    #     #     caption=messages.player_done(lang)
+    #     # )
+    # except Exception as e:
+    #     print(e)
+    #     await query.message.answer(messages_core.error(lang))
