@@ -24,23 +24,20 @@ async def subscription_rate(lang: LangTypes) -> InlineKeyboardMarkup:
             payload=f'subscription_for_{rate}_months',  
             currency="XTR",  
         ))
-        
+
     keyboard = InlineKeyboardBuilder()
     keyboard.button(text=texts[0] + ' | 1 ⭐', url=await invoice(1, 1))
     keyboard.button(text=texts[1] + ' | 2 ⭐', url=await invoice(6, 2))
     keyboard.button(text=texts[2] + ' | 3 ⭐', url=await invoice(12, 3))
     keyboard.button(text=texts[3], callback_data='profile')
     keyboard.adjust(1, repeat=True)
-
     return keyboard.as_markup()
     
     
 def subscription_pay(lang: LangTypes, currency: int) -> InlineKeyboardMarkup:
     match lang:
-        case LangTypes.RU:
-            text = 'Назад'
-        case LangTypes.EN:
-            text = 'Back'
+        case LangTypes.RU: text = 'Назад'
+        case LangTypes.EN: text = 'Back'
     keyboard = InlineKeyboardBuilder()
     keyboard.button(text=f'{currency} ⭐', pay=True)
     keyboard.button(text=text, callback_data='subscription')

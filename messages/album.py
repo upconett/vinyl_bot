@@ -3,10 +3,8 @@ from database.models.User import LangTypes
 
 def create_album_template(lang: LangTypes):
     match lang:
-        case LangTypes.RU:
-            return 'Выбери тип шаблона'
-        case LangTypes.EN:
-            return 'Choose template'
+        case LangTypes.RU: return 'Выбери тип шаблона'
+        case LangTypes.EN: return 'Choose template'
         
 
 def wait_for_photo(lang: LangTypes):

@@ -47,18 +47,14 @@ def profile(lang: LangTypes, profile_data: ProfileData) -> str:
 
 def language(lang: LangTypes) -> str:
     match lang:
-        case LangTypes.RU:
-            return 'Выбери язык'
-        case LangTypes.EN:
-            return 'Choose language'
+        case LangTypes.RU: return 'Выбери язык'
+        case LangTypes.EN: return 'Choose language'
 
 
 def template_image_warning(lang: LangTypes) -> str:
     match lang:
-        case LangTypes.RU:
-            return 'Картинка шаблонов не выставлена!'
-        case LangTypes.EN:
-            return 'Templates image not set!'
+        case LangTypes.RU: return 'Картинка шаблонов не выставлена!'
+        case LangTypes.EN: return 'Templates image not set!'
 
 
 def error(lang: LangTypes) -> str:
