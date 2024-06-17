@@ -1,22 +1,17 @@
-import asyncio
-
 from aiogram.dispatcher.router import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram import F
-from aiogram.filters import StateFilter
 from aiogram.types import *
-import json
 
 import messages.subscription
 from create_bot import logger, bot
 from messages import subscription as messages
-from messages import core as messages_core
 from keyboards import subscription as keyboards
 from keyboards import core as keyboards_core
 
+from logic.subscription import add_subscription
 from logic.core import *
-from logic.subscription import get_payment_link_yoomoney, check_payment, add_subscription
 from logic.vinyl import *
 
 
@@ -52,20 +47,7 @@ async def pre_checkout(pre_checkout_query: PreCheckoutQuery):
 
     # {
     # "id": "790986186977243107",
-    # "from_user": {
-    #     "id": 6626616767,
-    #     "is_bot": false,
-    #     "first_name": "\u0421\u0442\u0435\u043f\u0430\u043d",
-    #     "last_name": "\u0422\u0430\u0440\u0430\u0431\u0438\u043d",
-    #     "username": "upconett",
-    #     "language_code": "ru",
-    #     "is_premium": null,
-    #     "added_to_attachment_menu": null,
-    #     "can_join_groups": null,
-    #     "can_read_all_group_messages": null,
-    #     "supports_inline_queries": null,
-    #     "can_connect_to_business": null
-    # },
+    # "from_user": {...},
     # "currency": "XTR",
     # "total_amount": 1,
     # "invoice_payload": "subscription_for_1_months",
@@ -81,7 +63,6 @@ async def pre_checkout(pre_checkout_query: PreCheckoutQuery):
         await pre_checkout_query.answer(ok=True)
     except Exception as e:
         await pre_checkout_query.answer(ok=False, error_message=e)
-
 
 
 @router.message(F.successful_payment)
