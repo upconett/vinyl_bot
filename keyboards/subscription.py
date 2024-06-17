@@ -1,62 +1,47 @@
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from aiogram.types import User as AIOgramUser
+from aiogram.types import InlineKeyboardMarkup, LabeledPrice
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.methods.create_invoice_link import CreateInvoiceLink
 
+from create_bot import bot
+from messages import subscription as messages
 from database.models.User import LangTypes
 
 
-def subscription_rate(lang: LangTypes) -> InlineKeyboardMarkup:
+async def subscription_rate(lang: LangTypes) -> InlineKeyboardMarkup:
     match lang:
         case LangTypes.RU:
             texts = ['1 Месяц', '6 Месяцев', '12 Месяцев', 'Назад']
         case LangTypes.EN:
             texts = ['1 Month', '6 Months', '12 Months', 'Back']
-    btn_subscription_rate_month = InlineKeyboardButton(text=texts[0], callback_data='subscription_rate_1')
-    btn_subscription_rate_3months = InlineKeyboardButton(text=texts[1], callback_data='subscription_rate_6')
-    btn_subscription_rate_forever = InlineKeyboardButton(text=texts[2], callback_data='subscription_rate_12')
-    btn_back = InlineKeyboardButton(text=texts[3], callback_data='profile')
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [btn_subscription_rate_month],
-            [btn_subscription_rate_3months],
-            [btn_subscription_rate_forever],
-            [btn_back]
-        ]
-    )
+
+    async def invoice(rate: int, currency: int):
+        prices = [LabeledPrice(label="XTR", amount=currency)]  
+        return await bot(CreateInvoiceLink(
+            title=messages.subscription_pay_heading(lang, rate),
+            description=messages.subscription_pay_message(lang, rate),  
+            prices=prices,  
+            provider_token="",  
+            payload=f'subscription_for_{rate}_months',  
+            currency="XTR",  
+        ))
+        
+    keyboard = InlineKeyboardBuilder()
+    keyboard.button(text=texts[0] + ' | 1 ⭐', url=await invoice(1, 1))
+    keyboard.button(text=texts[1] + ' | 2 ⭐', url=await invoice(6, 2))
+    keyboard.button(text=texts[2] + ' | 3 ⭐', url=await invoice(12, 3))
+    keyboard.button(text=texts[3], callback_data='profile')
+    keyboard.adjust(1, repeat=True)
+
+    return keyboard.as_markup()
     
-
-def subscription_payment_method(lang: LangTypes) -> InlineKeyboardMarkup:
-    match lang:
-        case LangTypes.RU: text_back = 'Назад'
-        case LangTypes.EN: text_back = 'Back'
-    btn_subscription_payment_method_yoomoney = InlineKeyboardButton(
-        text='YooMoney', callback_data='subscription_payment_method_yoomoney')
-    btn_subscription_payment_method_paypal = InlineKeyboardButton(
-        text='PayPal', callback_data='subscription_payment_method_paypal')
-    btn_back = InlineKeyboardButton(text=text_back, callback_data='subscription')
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [btn_subscription_payment_method_yoomoney],
-            [btn_subscription_payment_method_paypal],
-            [btn_back]
-        ]
-    )
-
-
-def subscription_payment(lang: LangTypes, payment_link: str) -> InlineKeyboardMarkup:
+    
+def subscription_pay(lang: LangTypes, currency: int) -> InlineKeyboardMarkup:
     match lang:
         case LangTypes.RU:
-            texts = ['Оплатить', 'Я оплатил ✅', 'Назад']
+            text = 'Назад'
         case LangTypes.EN:
-            texts = ['Pay', 'Done ✅', 'Back']
-    btn_subscription_payment_buy = InlineKeyboardButton(text=texts[0], url=payment_link)
-    btn_subscription_payment_check = InlineKeyboardButton(text=texts[1], callback_data='subscription_check')
-    btn_back = InlineKeyboardButton(text=texts[2], callback_data='subscription')
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [btn_subscription_payment_buy],
-            [btn_subscription_payment_check],
-            [btn_back]
-        ]
-    )
-
-    
+            text = 'Back'
+    keyboard = InlineKeyboardBuilder()
+    keyboard.button(text=f'{currency} ⭐', pay=True)
+    keyboard.button(text=text, callback_data='subscription')
+    return keyboard.as_markup()

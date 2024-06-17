@@ -75,7 +75,7 @@ class CreationManager():
     async def startVinyl(self):
         print("Creation Manager started creating vinyl!")
         while True:
-            # print(self.queueVinyl, self.creatingVinyl, self.resultVinyl)
+            print(self.queueVinyl, self.creatingVinyl, self.resultVinyl)
             if len(self.queueVinyl) > 0 and len(self.creatingVinyl) < 2:
                 creation = self.queueVinyl.pop(0)
                 if isinstance(creation, Vinyl):
