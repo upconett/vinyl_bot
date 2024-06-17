@@ -26,7 +26,8 @@ async def main():
         admin
     )
 
-    asyncio.create_task(cm.start())
+    asyncio.create_task(cm.startVinyl())
+    asyncio.create_task(cm.startPlayer())
 
     # await cm.createVinyl(Vinyl(
     #     user_id=6626616767,

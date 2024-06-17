@@ -11,7 +11,7 @@ class VinylTypes(Enum):
 
 
 @dataclass
-class Creation:
+class Creation():
     user_id: int
     unique_id: int
 
@@ -34,12 +34,18 @@ class Vinyl(Creation):
 class Player(Creation):
     template: int
 
+    def __repr__(self):
+        return f'Player {self.user_id, self.unique_id}'
+
 
 @dataclass
 class Album(Creation):
     template: int
     first_path: str
     second_path: str | None
+
+    def __repr__(self):
+        return f'Album {self.user_id, self.unique_id}'
 
 
 @dataclass
@@ -55,51 +61,98 @@ class Result(Creation):
 
 class CreationManager():
     def __init__(self):
-        self.queue: list[Vinyl | Album | Player] = []
-        self.tasks: list[asyncio.Task] = []
-        self.creating: list[Vinyl | Album | Player] = []
-        self.result: list[Result] = []
+        self.queueVinyl: list[Vinyl] = []
+        self.tasksVinyl: list[asyncio.Task] = []
+        self.creatingVinyl: list[Vinyl] = []
+        self.resultVinyl: list[Result] = []
+
+        self.queuePlayer: list[Player] = []
+        self.tasksPlayer: list[asyncio.Task] = []
+        self.creatingPlayer: list[Player] = []
+        self.resultPlayer: list[Result] = []
 
 
-    async def start(self):
-        print("Creation Manager started!")
+    async def startVinyl(self):
+        print("Creation Manager started creating vinyl!")
         while True:
-            print(self.queue, self.creating, self.result)
-            if len(self.queue) > 0 and len(self.creating) < 2:
-                creation = self.queue.pop(0)
+            # print(self.queueVinyl, self.creatingVinyl, self.resultVinyl)
+            if len(self.queueVinyl) > 0 and len(self.creatingVinyl) < 2:
+                creation = self.queueVinyl.pop(0)
                 if isinstance(creation, Vinyl):
                     task = asyncio.create_task(self.make_vinyl(creation))
                 if isinstance(creation, Player):
                     task = asyncio.create_task(self.make_player(creation))
                 if isinstance(creation, Album):
                     task = asyncio.create_task(asyncio.sleep(10))
-                self.creating.append(creation)
-                self.tasks.append(task)
+                self.creatingVinyl.append(creation)
+                self.tasksVinyl.append(task)
 
             to_remove = []
-            for c in self.creating:
-                for r in self.result:
+            for c in self.creatingVinyl:
+                for r in self.resultVinyl:
                     if c.unique_id == r.unique_id:
                         to_remove.append(c)
             for r in to_remove:
-                self.creating.remove(r)
+                self.creatingVinyl.remove(r)
+
+            await asyncio.sleep(1)
+
+
+    async def startPlayer(self):
+        print("Creation Manager started creating players!")
+        while True:
+            # print(self.queuePlayer, self.creatingPlayer, self.resultPlayer)
+            if len(self.queuePlayer) > 0 and len(self.creatingPlayer) < 2:
+                creation = self.queuePlayer.pop(0)
+                if isinstance(creation, Vinyl):
+                    task = asyncio.create_task(self.make_vinyl(creation))
+                if isinstance(creation, Player):
+                    task = asyncio.create_task(self.make_player(creation))
+                if isinstance(creation, Album):
+                    task = asyncio.create_task(asyncio.sleep(10))
+                self.creatingPlayer.append(creation)
+                self.tasksPlayer.append(task)
+
+            to_remove = []
+            for c in self.creatingPlayer:
+                for r in self.resultPlayer:
+                    if c.unique_id == r.unique_id:
+                        to_remove.append(c)
+            for r in to_remove:
+                self.creatingPlayer.remove(r)
 
             await asyncio.sleep(1)
 
 
     async def createVinyl(self, vinyl: Vinyl) -> tuple[str, str]:
-        self.queue.append(vinyl)
+        self.queueVinyl.append(vinyl)
         await asyncio.sleep(1)
-        while vinyl in self.queue or vinyl in self.creating:
+        while vinyl in self.queueVinyl or vinyl in self.creatingVinyl:
             await asyncio.sleep(1)
         await asyncio.sleep(1)
-        for r in self.result:
+        for r in self.resultVinyl:
             if r.user_id == vinyl.user_id and r.unique_id == vinyl.unique_id:
                 my = r
                 break
         else:
             raise Exception("NOTHING V RESULTE")
-        self.result = [r for r in self.result if r != my]
+        self.resultVinyl = [r for r in self.resultVinyl if r != my]
+        return r.output_path
+
+    
+    async def createPlayer(self, player: Player) -> tuple[str, str]:
+        self.queuePlayer.append(player)
+        await asyncio.sleep(1)
+        while player in self.queuePlayer or player in self.creatingPlayer:
+            await asyncio.sleep(1)
+        await asyncio.sleep(1)
+        for r in self.resultPlayer:
+            if r.user_id == player.user_id and r.unique_id == player.unique_id:
+                my = r
+                break
+        else:
+            raise Exception("NOTHING V RESULTE")
+        self.resultPlayer = [r for r in self.resultPlayer if r != my]
         return r.output_path
 
 
@@ -129,23 +182,23 @@ class CreationManager():
                         vinyl.noise
                     )
         finally:
-            self.result.append(result)
-            self.creating.remove(vinyl)
-            self.tasks = [t for t in self.tasks if not t.done()]
+            self.resultVinyl.append(result)
+            self.creatingVinyl.remove(vinyl)
+            self.tasksVinyl = [t for t in self.tasksVinyl if not t.done()]
             print('FINISHED vinyl CREATION')
             
 
     async def make_player(self, player: Player):
         result = Result(player)
         try:
-            return await make_player_vinyl(
+            result.output_path = await make_player_vinyl(
                 player.unique_id,
                 player.template
             )
         finally:
-            self.result.append(result)
-            self.creating.remove(player)
-            self.tasks = [t for t in self.tasks if not t.done()]
+            self.resultPlayer.append(result)
+            self.creatingPlayer.remove(player)
+            self.tasksPlayer = [t for t in self.tasksPlayer if not t.done()]
 
 
     async def make_album(self, album: Album):
@@ -153,20 +206,20 @@ class CreationManager():
 
     
     def in_player_queue(self, user_id: int):
-        for c in self.queue:
+        for c in self.queuePlayer:
             if c.user_id == user_id and isinstance(c, Player):
                 return True
-        for c in self.creating:
+        for c in self.creatingPlayer:
             if c.user_id == user_id and isinstance(c, Player):
                 return True
         return False
 
 
     def in_vinyl_queue(self, user_id: int):
-        for c in self.queue:
+        for c in self.queueVinyl:
             if c.user_id == user_id and isinstance(c, Vinyl):
                 return True
-        for c in self.creating:
+        for c in self.creatingVinyl:
             if c.user_id == user_id and isinstance(c, Vinyl):
                 return True
         return False
