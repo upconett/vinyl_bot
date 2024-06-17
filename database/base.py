@@ -6,7 +6,7 @@ from sqlalchemy import inspect
 from database.models import Base
 from create_bot import dbfile
 
-engine = create_engine('sqlite:///{0}'.format(dbfile), echo=True)
+engine = create_engine('sqlite:///{0}'.format(dbfile))
 
 if not inspect(engine).has_table('users'):
     Base.metadata.create_all(engine)
