@@ -29,3 +29,4 @@ async def check_free_vinyl(user: AIOgramUser) -> bool:
     async with AsyncSession(async_engine) as s:
         u = await s.get(User, {'id': user.id})
         return u.free_vinyl != 0
+        
