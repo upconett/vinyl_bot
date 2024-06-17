@@ -310,11 +310,8 @@ async def query_end(query: CallbackQuery, state: FSMContext):
         type = VinylTypes.PHOTO if data['cover_type'] == 1 else VinylTypes.VIDEO
         video, circle = await cm.createVinyl(Vinyl(user.id, unique_id, data['template'], type, audio_file, cover_file, data['offset'], data['speed'], data['noise']))
 
-        data['unique_id'] = unique_id
-        await state.set_data(data)
-
         await query.message.answer_video_note(
-            video_note=BufferedInputFile(open(circle, 'rb').read(), filename='video_for_test')
+            video_note=BufferedInputFile(open(circle, 'rb').read(), filename='vinyl for you')
         )
         await query.message.answer(
             text=messages.get_player(lang),
@@ -327,11 +324,10 @@ async def query_end(query: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(F.data.startswith('get_player_'))
-async def query_get_player(query: CallbackQuery, state: FSMContext):
+async def query_get_player(query: CallbackQuery):
     user = query.from_user
     await update_user(user)
     lang = await get_language(user)
-    data = await state.get_data() 
 
     unique_id = query.data.replace('get_player_', '')
     video_path = fr'creation/video/{unique_id}_output_video.mp4'
@@ -369,12 +365,13 @@ async def query_get_player_template(query: CallbackQuery):
         reply_markup=keyboards_core.go_back(lang)
     )
 
-    # try:
+    try:
+        video_path = await cm.createPlayer(Player(user.id, unique_id, template))
 
-    #     # await query.message.answer_video(
-    #     #     video=BufferedInputFile(open(, 'rb').read(), filename='player for you'),
-    #     #     caption=messages.player_done(lang)
-    #     # )
-    # except Exception as e:
-    #     print(e)
-    #     await query.message.answer(messages_core.error(lang))
+        await query.message.answer_video(
+            video=BufferedInputFile(open(video_path, 'rb').read(), filename='player for you'),
+            caption=messages.player_done(lang)
+        )
+    except Exception as e:
+        print(e)
+        await query.message.answer(messages_core.error(lang))
