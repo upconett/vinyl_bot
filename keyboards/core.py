@@ -60,3 +60,17 @@ def go_back(lang: LangTypes) -> InlineKeyboardMarkup:
             [btn_back]
         ]
     )
+
+
+def go_back_profile(lang: LangTypes) -> InlineKeyboardMarkup:
+    match lang:
+        case LangTypes.RU:
+            text = 'Вернуться'
+        case LangTypes.EN:
+            text = 'Go back'
+    btn_back = InlineKeyboardButton(text=text, callback_data='profile_new')
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [btn_back]
+        ]
+    )

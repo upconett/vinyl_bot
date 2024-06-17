@@ -83,6 +83,26 @@ async def query_profile(query: CallbackQuery):
     logger.info(f'@{user.username} called profile')
 
 
+@router.callback_query(F.data == 'profile_new')
+async def query_profile(query: CallbackQuery):
+    user = query.from_user
+    await update_user(user)
+    lang = await get_language(user)
+
+    pd = await get_profile_data(user)
+
+    await query.message.edit_reply_markup(
+        reply_markup=None
+    )
+
+    await query.message.answer(
+        text=messages.profile(lang, pd),
+        reply_markup=keyboards.profile(lang)
+    )
+    await query.answer()
+    logger.info(f'@{user.username} called profile')
+    
+
 @router.callback_query(F.data == 'language')
 async def query_language(query: CallbackQuery):
     user = query.from_user
