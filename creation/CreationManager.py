@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 from enum import Enum
-import asyncio
+import asyncio, os
 
 from creation.asyncio import *
+from utility.exceptions import NoResFolder
 
 
 class VinylTypes(Enum):
@@ -70,6 +71,11 @@ class CreationManager():
         self.tasksPlayer: list[asyncio.Task] = []
         self.creatingPlayer: list[Player] = []
         self.resultPlayer: list[Result] = []
+
+        for f in ['img/', 'audio/', 'users_video/', 'video/', 'res/']:
+            if not os.path.isdir(f'creation/{f}'):
+                if f == 'res/': raise NoResFolder('\nThere is no <creation/res/> folder!\nPaste contents of res archive to <creation/res>/\n')
+                os.makedirs(f'creation/{f}')
 
 
     async def startVinyl(self):

@@ -4,7 +4,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from utility import config, logging
-from utility.exceptions import NoConfigFile
+from utility.exceptions import NoConfigFile, NoResFolder
 
 
 try:
@@ -26,6 +26,9 @@ except NoConfigFile:
     quit()
 except TypeError:
     print('Seems like config.yaml is invalid!\nSee README.md!')
+    quit()
+except NoResFolder as e:
+    print(e)
     quit()
 
 
