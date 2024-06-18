@@ -11,6 +11,13 @@ async def use_free_vinyl(user: AIOgramUser) -> None:
         u.free_vinyl -= 1
         await s.commit()
 
+    
+async def add_free_vinyl(user: AIOgramUser) -> None:
+    async with AsyncSession(async_engine) as s:
+        u = await s.get(User, {'id': user.id})
+        u.free_vinyl += 1
+        await s.commit()
+
 
 async def check_sub_or_free_vinyl(user: AIOgramUser) -> bool:
     """Проверка есть ли у пользователя подписка или бесплатные пластинки"""
