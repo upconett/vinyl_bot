@@ -57,6 +57,6 @@ def paste_video_and_player(user_id, background_path, video_path):
     ]
 
     # Выполнение команды
-    subprocess.run(command, check=True)
+    subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     os.remove(f'creation/img/{user_id}_player.png')
     return f'creation/video/{user_id}_player1.mp4'

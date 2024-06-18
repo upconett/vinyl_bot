@@ -23,6 +23,7 @@ def create_vinyl_template(lang: LangTypes) -> InlineKeyboardMarkup:
             callback_data=f'create_vinyl_template_{x}'
         )
     keyboard.button(text=text, callback_data='start')
+    keyboard.adjust(3,1)
     return keyboard.as_markup()
 
 

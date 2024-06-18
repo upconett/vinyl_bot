@@ -1,6 +1,5 @@
 import os
 import subprocess
-import datetime
 
 
 def make_background(user_id, photo_path):
@@ -12,7 +11,7 @@ def make_background(user_id, photo_path):
         '-vf', "scale='max(2276,iw*1518/ih)':'max(1518,ih*2276/iw)'",
         f'creation/img/{user_id}_scale.png'
     ]
-    subprocess.run(command)
+    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     os.remove(photo_path)
 
     command = [
@@ -23,7 +22,7 @@ def make_background(user_id, photo_path):
         "crop=2276:1518:(iw-2276)/2:(ih-1518)/2, scale=2276:1518:force_original_aspect_ratio=decrease, pad=2276:1518:(ow-iw)/2:(oh-ih)/2, gblur=sigma=100",
         f'creation/img/{user_id}_background.png'
     ]
-    subprocess.run(command)
+    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     os.remove(f'creation/img/{user_id}_scale.png')
     return f'creation/img/{user_id}_background.png'
 
@@ -37,7 +36,7 @@ def paste_soft_light(user_id, photo_path):
         '-i', 'creation/res/player3_soft_light.png',
         '-filter_complex', "[0:v][1:v]blend=shortest=1:all_mode=softlight",
         f'creation/img/{user_id}_soft_light.png']
-    subprocess.run(command)
+    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     os.remove(photo_path)
     return f'creation/img/{user_id}_soft_light.png'
 
@@ -51,7 +50,7 @@ def paste_multiply(user_id, photo_path):
         '-i', 'creation/res/player3_multiply.png',
         '-filter_complex', "[0:v][1:v]blend=shortest=1:all_mode=multiply",
         f'creation/img/{user_id}_multiply.png']
-    subprocess.run(command)
+    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     os.remove(photo_path)
     return f'creation/img/{user_id}_multiply.png'
 
@@ -65,7 +64,7 @@ def paste_screen(user_id, photo_path):
         '-i', 'creation/res/player3_screen.png',
         '-filter_complex', "[0:v][1:v]blend=shortest=1:all_mode=screen",
         f'creation/img/{user_id}_screen.png']
-    subprocess.run(command)
+    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     os.remove(photo_path)
     return f'creation/img/{user_id}_screen.png'
 
@@ -79,7 +78,7 @@ def paste_normal(user_id, photo_path):
         '-i', 'creation/res/player3_normal.png',
         '-filter_complex', "overlay",
         f'creation/img/{user_id}_normal.png']
-    subprocess.run(command)
+    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     os.remove(photo_path)
     return f'creation/img/{user_id}_normal.png'
 
@@ -104,7 +103,7 @@ def paste_video(user_id, video_path, background):
         '-shortest',
         f'creation/video/{user_id}_vinil.mp4'
     ]
-    subprocess.run(command)
+    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     os.remove(background)
     return f'creation/video/{user_id}_vinil.mp4'
 
@@ -117,6 +116,6 @@ def paste_needle(user_id, video_path):
         '-i', 'creation/res/player3_needle.png',
         '-filter_complex', "overlay",
         f'creation/video/{user_id}_player3.mp4']
-    subprocess.run(command)
+    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     os.remove(video_path)
     return f'creation/video/{user_id}_player3.mp4'

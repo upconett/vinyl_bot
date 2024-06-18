@@ -274,9 +274,7 @@ async def query_end(query: CallbackQuery, state: FSMContext):
     data = await state.get_data()
 
     if not await check_sub(user):
-        if await check_free_vinyl(user):
-            await use_free_vinyl(user)
-        else:
+        if not await check_free_vinyl(user):
             await query.answer(messages.no_free_vinyl(lang), show_alert=True)
             return
 
@@ -306,6 +304,7 @@ async def query_end(query: CallbackQuery, state: FSMContext):
     print('Started creation')
 
     try:
+        await use_free_vinyl(user)
         unique_id = get_unique_id()
         type = VinylTypes.PHOTO if data['cover_type'] == 1 else VinylTypes.VIDEO
         video, circle = await cm.createVinyl(Vinyl(user.id, unique_id, data['template'], type, audio_file, cover_file, data['offset'], data['speed'], data['noise']))
@@ -319,6 +318,7 @@ async def query_end(query: CallbackQuery, state: FSMContext):
         )
     except Exception as e:
         print(e)
+        await add_free_vinyl(user)
         await query.message.answer(messages_core.error(lang))
         await state.clear()
 
