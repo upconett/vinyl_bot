@@ -16,11 +16,11 @@ async def main():
     dp.shutdown.register(onshutdown)
 
     dp.include_routers(
+        admin,
         core,
         subscription,
         vinyl,
-        album,
-        admin
+        album
     )
 
     asyncio.create_task(cm.startVinyl())

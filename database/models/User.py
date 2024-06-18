@@ -22,6 +22,7 @@ class User(BaseModel):
     last_name: Mapped[str | None]
 
     language: Mapped[LangTypes]
+    active: Mapped[bool] = mapped_column(default=True)
 
     free_vinyl: Mapped[int] = mapped_column(default=5)
     free_albums: Mapped[int] = mapped_column(default=1)
@@ -38,12 +39,12 @@ class User(BaseModel):
         self.last_name = user.last_name
         self.language = LangTypes.RU if user.language_code == 'ru' else LangTypes.EN
 
-
     async def update(self, user: AIOgramUser) -> None:
         """Обновление данных о пользователе"""
         self.username = user.username
         self.first_name = user.first_name
         self.last_name = user.last_name
+        self.active = True
 
     def __repr__(self) -> str:
         return f"User(id={self.id!r}, username={self.username!r})"
