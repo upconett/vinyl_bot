@@ -9,4 +9,4 @@ config.yaml
 *.mp4
 *.png
 template_images.json
-!creation/res/*
+creation/res/
