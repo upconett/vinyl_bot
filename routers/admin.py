@@ -160,7 +160,7 @@ async def message_add_image_help(message: Message):
     logger.info(f'@{user.username} admin_id [{user.id}] tried to use {message.text}')
 
 
-@router.message(F.text.startswith('/announce\n'))
+@router.message(F.text.startswith('/announce'))
 async def message_announce_try(message: Message, state: FSMContext):
     user = message.from_user
     await update_user(user)
@@ -341,7 +341,7 @@ async def announce_approve(query: CallbackQuery, state: FSMContext):
         try:
             if 'media_group' in data.keys():
                 await bot.send_media_group(u.id, media=data['media_group'])
-            if 'file_type' in data.keys():
+            elif 'file_type' in data.keys():
                 match data['file_type']:
                     case 'photo':
                         await bot.send_photo(u.id, photo=data['file_id'], caption=message, parse_mode='HTML')
