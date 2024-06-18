@@ -341,15 +341,25 @@ async def query_get_player(query: CallbackQuery):
         await query.answer(messages.player_query_block(lang), show_alert=True)
         return
 
-    await query.message.edit_text(
-        text=messages.player_types(lang),
-        reply_markup=keyboards.player_types(unique_id)
-    )
+    await query.message.delete()
+
+    try:
+        await query.message.answer_photo(
+            photo=get_image('templates_player'),
+            caption=messages.player_types(lang),
+            reply_markup=keyboards.player_types(unique_id)
+        )
+    except:
+        await query.message.answer(
+            text=messages.player_types(lang),
+            reply_markup=keyboards.player_types(unique_id)
+        )
     await query.answer()
 
 
 @router.callback_query(F.data.startswith('player_template_'))
 async def query_get_player_template(query: CallbackQuery):
+    print('lol')
     user = query.from_user
     await update_user(user)
     lang = await get_language(user)
@@ -360,10 +370,16 @@ async def query_get_player_template(query: CallbackQuery):
         await query.answer(messages.player_query_block(lang), show_alert=True)
         return
 
-    await query.message.edit_text(
-        text=messages.player_get_ready(lang),
-        reply_markup=keyboards_core.go_back(lang)
-    )
+    try:
+        await query.message.edit_caption(
+            caption=messages.player_get_ready(lang),
+            reply_markup=keyboards_core.go_back(lang)
+        )
+    except:
+        await query.message.edit_text(
+            text=messages.player_get_ready(lang),
+            reply_markup=keyboards_core.go_back(lang)
+        )
 
     try:
         video_path = await cm.createPlayer(Player(user.id, unique_id, template))
