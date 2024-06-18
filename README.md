@@ -1,3 +1,19 @@
+### Запуск бота
+
+Разархивируйте `res.zip` в директорию `creation/res/`!
+
+Создайте виртуальное окружение, активируйте его
+```bash
+# Linux
+python3 -m venv venv
+source venv/bin/activate
+```
+
+Установите зависимости
+```bash
+pip install -r requirements.txt
+```
+
 Создайте `config.yaml`, запишите туда:
 ```yaml
 token: 'токен-вашего-бота'
@@ -9,4 +25,11 @@ admins:
   - тг-айди-другого-админа
 ```
 
-Разархивируйте `res.zip` в директорию `creation/res/`!
+Запустите бота
+```bash
+# Linux
+source start.sh 
+
+# Windows
+.\start.ps1
+```
