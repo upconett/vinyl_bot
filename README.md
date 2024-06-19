@@ -12,6 +12,7 @@ source venv/bin/activate
 Установите зависимости
 ```bash
 pip install -r requirements.txt
+apt install ffmpeg
 ```
 
 Создайте `config.yaml`, запишите туда:
