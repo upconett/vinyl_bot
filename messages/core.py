@@ -63,3 +63,11 @@ def error(lang: LangTypes) -> str:
             return 'Произошла какая-то ошибка 🤕\nПобробуйте позже'
         case LangTypes.EN:
             return 'Some error occured 🤕\nTry again later'
+
+
+def voice_forbidden(lang: LangTypes) -> str:
+    match lang:
+        case LangTypes.RU:
+            return 'Бот не может отправить вам сообщение, у вас запрещена отправка аудио и видео! 🤕\nОтключите и попробуйте снова'
+        case LangTypes.EN:
+            return 'Bot can\'t send you the content, you forbid to send audios and videos! 🤕\nDisable that and try again'

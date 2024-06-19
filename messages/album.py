@@ -10,9 +10,9 @@ def create_album_template(lang: LangTypes):
 def wait_for_photo(lang: LangTypes):
     match lang:
         case LangTypes.RU:
-            return 'Учти, что фото желательно скидывать разрешения X на Y иначе может получиться некрасиво'
+            return 'Пришли фото без сжатия!\nУчти, что фото желательно скидывать разрешения X на Y иначе может получиться некрасиво'
         case LangTypes.EN:
-            return 'Keep in mind that it is advisable to change photo resolutions X to Y, otherwise it may turn out ugly'
+            return 'Send uncompressed photo!\nKeep in mind that it is advisable to change photo resolutions X to Y, otherwise it may turn out ugly'
 
 
 def wait_single_photo(lang: LangTypes):
@@ -63,12 +63,12 @@ def wrong_photo_format(lang: LangTypes):
     match lang:
         case LangTypes.RU:
             return (
-                'Пожалуйста, пришлите сжатое фото\n'
+                'Пожалуйста, пришлите фото без сжатия\n'
                 'Или введите /start, чтобы отменить создание альбома'
             )
         case LangTypes.EN:
             return (
-                'Please, send compressed photo\n'
+                'Please, send uncompressed photo\n'
                 'Or use /start to cancel album creation'
             )
         
@@ -93,3 +93,19 @@ def no_free_albums(lang: LangTypes):
             return '🌠 Подпишитесь, чтобы создать новые альбомы'
         case LangTypes.EN:
             return '🌠 Subscribe to create new albums'
+
+
+def album_ready(lang: LangTypes):
+    match lang:
+        case LangTypes.RU:
+            return 'Ваш альбом готов ✅'
+        case LangTypes.EN:
+            return 'Your album is ready ✅'
+
+
+def album_query_block(lang: LangTypes):
+    match lang:
+        case LangTypes.RU:
+            return 'Подождите пока завершится создание другого вашего альбома ⌛' 
+        case LangTypes.EN:
+            return 'Wait for your other album to be ready ⌛'

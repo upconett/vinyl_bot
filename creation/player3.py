@@ -114,6 +114,7 @@ def paste_needle(user_id, video_path):
         '-y',
         '-i', video_path,
         '-i', 'creation/res/player3_needle.png',
+        '-c:v', 'libx264',
         '-filter_complex', "overlay",
         f'creation/video/{user_id}_player3.mp4']
     subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

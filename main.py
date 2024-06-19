@@ -25,6 +25,7 @@ async def main():
 
     asyncio.create_task(cm.startVinyl())
     asyncio.create_task(cm.startPlayer())
+    asyncio.create_task(cm.startAlbum())
 
     start_scheduler()
 

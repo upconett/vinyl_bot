@@ -325,7 +325,10 @@ async def query_end(query: CallbackQuery, state: FSMContext):
     except Exception as e:
         print(e)
         await add_free_vinyl(user)
-        await query.message.answer(messages_core.error(lang))
+        if 'VOICE_MESSAGES_FORBIDDEN' in e:
+            await query.message.answer(messages_core.voice_forbidden(lang))
+        else:
+            await query.message.answer(messages_core.error(lang))
         await state.clear()
 
 
@@ -407,4 +410,7 @@ async def query_get_player_template(query: CallbackQuery, state: FSMContext):
         )
     except Exception as e:
         print(e)
-        await query.message.answer(messages_core.error(lang))
+        if 'VOICE_MESSAGES_FORBIDDEN' in e:
+            await query.message.answer(messages_core.voice_forbidden(lang))
+        else:
+            await query.message.answer(messages_core.error(lang))
