@@ -1,4 +1,3 @@
-from yoomoney import Client
 from creation.CreationManager import CreationManager
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
