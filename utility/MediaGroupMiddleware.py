@@ -13,7 +13,6 @@ class MediaGroupMiddleware(BaseMiddleware):
         message: Message,
         data: Dict[str, Any]
     ) -> Any:
-        print(message.media_group_id)
         if not message.media_group_id:
             data['media_group'] = None
             return await handler(message, data)
