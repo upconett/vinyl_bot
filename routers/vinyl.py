@@ -32,6 +32,7 @@ class CreationStates(StatesGroup):
     wait_for_approve = State()
     wait_for_player = State()
 
+    album = State()
 
 
 @router.callback_query(F.data == 'create_vinyl')
@@ -81,12 +82,14 @@ async def message_wait_for_audio(message: Message, state: FSMContext):
 
     data['audio_file_id'] = file.file_id
 
-    image_id = get_image('templates_vinyl')
-    if image_id:
-        photo_message = await message.answer_photo(photo=image_id)
+    images = get_image('templates_vinyl')
+    if images:
+        photo_messages = await message.answer_media_group(media=[
+            InputMediaPhoto(media=x) for x in images
+        ])
     else:
-        photo_message = await message.answer(messages_core.template_image_warning(lang))
-    data['photo_id'] = photo_message.message_id
+        photo_messages = [await message.answer(messages_core.template_image_warning(lang))]
+    data['photo_ids'] = [x.message_id for x in photo_messages]
 
     await message.answer(
         text=messages.create_vinyl_template(lang),
@@ -119,7 +122,7 @@ async def query_wait_for_template(query: CallbackQuery, state: FSMContext):
     data['query_message_id'] = query_message.message_id
     await query.answer()
 
-    await bot.delete_message(user.id, data['photo_id'])
+    await bot.delete_messages(user.id, data['photo_ids'])
 
     await state.set_data(data)
 
@@ -324,7 +327,7 @@ async def query_end(query: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(F.data.startswith('get_player_'))
-async def query_get_player(query: CallbackQuery):
+async def query_get_player(query: CallbackQuery, state: FSMContext):
     user = query.from_user
     await update_user(user)
     lang = await get_language(user)
@@ -344,9 +347,11 @@ async def query_get_player(query: CallbackQuery):
     await query.message.delete()
 
     try:
-        await query.message.answer_photo(
-            photo=get_image('templates_player'),
-            caption=messages.player_types(lang),
+        photo_ids = await query.message.answer_media_group(
+            media=[InputMediaPhoto(media=x) for x in get_image('templates_player')],
+        )
+        await query.message.answer(
+            text=messages.player_types(lang),
             reply_markup=keyboards.player_types(unique_id)
         )
     except:
@@ -356,13 +361,18 @@ async def query_get_player(query: CallbackQuery):
         )
     await query.answer()
 
+    await state.set_data({'photo_ids': [x.message_id for x in photo_ids]})
+    await state.set_state(CreationStates.album)
+
 
 @router.callback_query(F.data.startswith('player_template_'))
-async def query_get_player_template(query: CallbackQuery):
-    print('lol')
+async def query_get_player_template(query: CallbackQuery, state: FSMContext):
     user = query.from_user
     await update_user(user)
     lang = await get_language(user)
+
+    if state:
+        data = await state.get_data()
 
     unique_id, template = map(int, query.data.replace('player_template_', '').split('_'))
     
@@ -380,6 +390,10 @@ async def query_get_player_template(query: CallbackQuery):
             text=messages.player_get_ready(lang),
             reply_markup=keyboards_core.go_back(lang)
         )
+
+    await bot.delete_messages(user.id, data['photo_ids'])
+
+    await state.clear()
 
     try:
         video_path = await cm.createPlayer(Player(user.id, unique_id, template))
