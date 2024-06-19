@@ -21,8 +21,8 @@ def get_logger(logfile: str):
     logger = logging.getLogger('main')
     handler = TimedRotatingFileHandler(
         filename=logfile+f'/vinyl.log', 
-        when='s',
-        interval=5,
+        when='mindnight',
+        interval=1,
         encoding='utf-8'
     )
     handler.suffix = datetime.now().strftime('%d.%m.%Y')
