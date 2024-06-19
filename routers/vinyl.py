@@ -66,41 +66,44 @@ async def query_create_vinyl(query: CallbackQuery, state: FSMContext):
 
 @router.message(StateFilter(CreationStates.wait_for_audio))
 async def message_wait_for_audio(message: Message, state: FSMContext):
-    if not any([message.audio, message.voice]):
-        return
-    user = message.from_user
-    await update_user(user)
-    lang = await get_language(user)
-    data = await state.get_data()
+    try:
+        if not any([message.audio, message.voice]):
+            return
+        user = message.from_user
+        await update_user(user)
+        lang = await get_language(user)
+        data = await state.get_data()
 
-    file = None
-    if message.audio: file = message.audio
-    elif message.voice: file = message.voice
-    if file.duration < 3:
-        await message.answer(messages.audio_fail(lang))
-        return
+        file = None
+        if message.audio: file = message.audio
+        elif message.voice: file = message.voice
+        if file.duration < 3:
+            await message.answer(messages.audio_fail(lang))
+            return
 
-    data['audio_file_id'] = file.file_id
+        data['audio_file_id'] = file.file_id
 
-    images = get_image('templates_vinyl')
-    if images:
-        photo_messages = await message.answer_media_group(media=[
-            InputMediaPhoto(media=x) for x in images
-        ])
-    else:
-        photo_messages = [await message.answer(messages_core.template_image_warning(lang))]
-    data['photo_ids'] = [x.message_id for x in photo_messages]
+        images = get_image('templates_vinyl')
+        if images:
+            photo_messages = await message.answer_media_group(media=[
+                InputMediaPhoto(media=x) for x in images
+            ])
+        else:
+            photo_messages = [await message.answer(messages_core.template_image_warning(lang))]
+        data['photo_ids'] = [x.message_id for x in photo_messages]
 
-    await message.answer(
-        text=messages.create_vinyl_template(lang),
-        reply_markup=keyboards.create_vinyl_template(lang)
-    )
+        await message.answer(
+            text=messages.create_vinyl_template(lang),
+            reply_markup=keyboards.create_vinyl_template(lang)
+        )
 
-    await bot.delete_message(user.id, data['query_message_id'])
-     
-    await state.set_data(data)
+        await bot.delete_message(user.id, data['query_message_id'])
+        
+        await state.set_data(data)
 
-    await state.set_state(CreationStates.wait_for_template)
+        await state.set_state(CreationStates.wait_for_template)
+    except Exception as e:
+        print(e)
     logger.info(f'@{user.username} sent audio for vinyl, saved {file.file_id}.mp3')
 
 
