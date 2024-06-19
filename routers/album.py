@@ -39,12 +39,12 @@ async def query_create_album(query: CallbackQuery, state: FSMContext):
         await query.answer(messages.no_free_albums(lang), show_alert=True)
         return
 
-    image_id = get_image('templates_album')
-    if image_id:
-        photo_message = await query.message.answer_photo(photo=image_id)
+    images = get_image('templates_album')
+    if images:
+        photo_messages = await query.message.answer_media_group(media=[InputMediaPhoto(media=x) for x in images])
     else:
-        photo_message = await query.message.answer(messages_core.template_image_warning(lang))
-    data['photo_id'] = photo_message.message_id
+        photo_messages = [await query.message.answer(messages_core.template_image_warning(lang))]
+    data['photo_ids'] = [x.message_id for x in photo_messages]
 
     await query.message.delete()
     await query.message.answer(
@@ -87,7 +87,7 @@ async def query_wait_for_template(query: CallbackQuery, state: FSMContext):
 
     await state.set_data(data)
 
-    await bot.delete_message(user.id, data['photo_id'])
+    await bot.delete_messages(user.id, data['photo_ids'])
     await state.set_state(st)
     logger.info(f'@{user.username} chose album template {tmp}')
 
