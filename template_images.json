@@ -1,5 +1,14 @@
 {
-  "templates_vinyl": "AgACAgIAAxkBAAIMGGZx5Wzud9M-7cZ8s-JcjuhoxpVKAAJM4DEb1N6RSyk-oO3auQSjAQADAgADeAADNQQ",
-  "templates_album": "AgACAgIAAxkBAAINlGZyBLiq9wkj53PS9ccusvq55TWLAAJR4DEb1N6RS1ZaFRUU18nGAQADAgADbQADNQQ",
-  "templates_player": "AgACAgIAAxkBAAINnmZyBPcEtv4Sb1oEf7cYciQ-TWqIAAJR4DEb1N6RS1ZaFRUU18nGAQADAgADbQADNQQ"
+  "templates_vinyl": 
+  [
+    "AgACAgIAAxkBAAIN22ZzMrzTKDWJCYNtPSptZ1nGHTVeAAJw3DEbVEiYSwwOfhyjmeSfAQADAgADbQADNQQ"
+  ],
+  "templates_album": 
+  [
+    "AgACAgIAAxkBAAIN22ZzMrzTKDWJCYNtPSptZ1nGHTVeAAJw3DEbVEiYSwwOfhyjmeSfAQADAgADbQADNQQ"
+  ],
+  "templates_player": 
+  [
+    "AgACAgIAAxkBAAIN22ZzMrzTKDWJCYNtPSptZ1nGHTVeAAJw3DEbVEiYSwwOfhyjmeSfAQADAgADbQADNQQ"
+  ]
 }
