@@ -43,7 +43,7 @@ class Player(Creation):
 class Album(Creation):
     template: int
     first_path: str
-    second_path: str | None
+    second_path: str = None
 
     def __repr__(self):
         return f'Album {self.user_id, self.unique_id}'
@@ -60,6 +60,7 @@ class Result(Creation):
     def __repr__(self):
         return f'Result {self.user_id, self.unique_id}'
 
+
 class CreationManager():
     def __init__(self):
         self.queueVinyl: list[Vinyl] = []
@@ -71,6 +72,11 @@ class CreationManager():
         self.tasksPlayer: list[asyncio.Task] = []
         self.creatingPlayer: list[Player] = []
         self.resultPlayer: list[Result] = []
+
+        self.queueAlbum: list[Album] = []
+        self.tasksAlbum: list[asyncio.Task] = []
+        self.creatingAlbum: list[Album] = []
+        self.resultAlbum: list[Result] = []
 
         for f in ['img/', 'audio/', 'users_video/', 'video/', 'res/']:
             if not os.path.isdir(f'creation/{f}'):
@@ -84,12 +90,7 @@ class CreationManager():
             # print(self.queueVinyl, self.creatingVinyl, self.resultVinyl)
             if len(self.queueVinyl) > 0 and len(self.creatingVinyl) < 2:
                 creation = self.queueVinyl.pop(0)
-                if isinstance(creation, Vinyl):
-                    task = asyncio.create_task(self.make_vinyl(creation))
-                if isinstance(creation, Player):
-                    task = asyncio.create_task(self.make_player(creation))
-                if isinstance(creation, Album):
-                    task = asyncio.create_task(asyncio.sleep(10))
+                task = asyncio.create_task(self.make_vinyl(creation))
                 self.creatingVinyl.append(creation)
                 self.tasksVinyl.append(task)
 
@@ -110,12 +111,7 @@ class CreationManager():
             # print(self.queuePlayer, self.creatingPlayer, self.resultPlayer)
             if len(self.queuePlayer) > 0 and len(self.creatingPlayer) < 2:
                 creation = self.queuePlayer.pop(0)
-                if isinstance(creation, Vinyl):
-                    task = asyncio.create_task(self.make_vinyl(creation))
-                if isinstance(creation, Player):
-                    task = asyncio.create_task(self.make_player(creation))
-                if isinstance(creation, Album):
-                    task = asyncio.create_task(asyncio.sleep(10))
+                task = asyncio.create_task(self.make_player(creation))
                 self.creatingPlayer.append(creation)
                 self.tasksPlayer.append(task)
 
@@ -129,6 +125,26 @@ class CreationManager():
 
             await asyncio.sleep(1)
 
+    
+    async def startAlbum(self):
+        print("Creation Manager started creating albums!")
+        while True:
+            if len(self.queueAlbum) > 0 and len(self.creatingAlbum) < 2:
+                creation = self.queueAlbum.pop(0)
+                task = asyncio.create_task(self.make_album(creation))
+                self.creatingAlbum.append(creation)
+                self.tasksAlbum.append(task)
+            
+            to_remove = []
+            for c in self.creatingAlbum:
+                for r in self.resultAlbum:
+                    if c.unique_id == r.unique_id:
+                        to_remove.append(c)
+            for r in to_remove:
+                self.creatingAlbum.remove(r)
+
+            await asyncio.sleep(1)
+            
 
     async def createVinyl(self, vinyl: Vinyl) -> tuple[str, str]:
         self.queueVinyl.append(vinyl)
@@ -159,6 +175,22 @@ class CreationManager():
         else:
             raise Exception("NOTHING V RESULTE")
         self.resultPlayer = [r for r in self.resultPlayer if r != my]
+        return r.output_path
+
+
+    async def createAlbum(self, album: Album) -> str:
+        self.queueAlbum.append(album)
+        await asyncio.sleep(1)
+        while album in self.queueAlbum or album in self.creatingAlbum:
+            await asyncio.sleep(1)
+        await asyncio.sleep(1)
+        for r in self.resultAlbum:
+            if r.user_id == album.user_id and r.unique_id == album.unique_id:
+                my = r
+                break
+        else:
+            raise Exception("NOTHING V RESULTE")
+        self.resultAlbum = [r for r in self.resultAlbum if r != my]
         return r.output_path
 
 
@@ -208,25 +240,39 @@ class CreationManager():
 
 
     async def make_album(self, album: Album):
-        pass
+        result = Result(album)
+        try:
+            result.output_path = await make_album(
+                album.unique_id,
+                album.template,
+                album.first_path,
+                album.second_path
+            )
+        finally:
+            self.resultAlbum.append(result)
+            self.creatingAlbum.remove(album)
+            self.tasksAlbum = [t for t in self.tasksAlbum if not t.done()]
 
     
     def in_player_queue(self, user_id: int):
         for c in self.queuePlayer:
-            if c.user_id == user_id and isinstance(c, Player):
-                return True
+            if c.user_id == user_id: return True
         for c in self.creatingPlayer:
-            if c.user_id == user_id and isinstance(c, Player):
-                return True
+            if c.user_id == user_id: return True
         return False
 
 
     def in_vinyl_queue(self, user_id: int):
         for c in self.queueVinyl:
-            if c.user_id == user_id and isinstance(c, Vinyl):
-                return True
+            if c.user_id == user_id: return True
         for c in self.creatingVinyl:
-            if c.user_id == user_id and isinstance(c, Vinyl):
-                return True
+            if c.user_id == user_id: return True
         return False
 
+
+    def in_album_queue(self, user_id: int):
+        for c in self.queueAlbum:
+            if c.user_id == user_id: return True
+        for c in self.creatingAlbum:
+            if c.user_id == user_id: return True
+        return False

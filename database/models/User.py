@@ -37,7 +37,7 @@ class User(BaseModel):
         self.username = user.username
         self.first_name = user.first_name
         self.last_name = user.last_name
-        self.language = LangTypes.RU if user.language_code == 'ru' else LangTypes.EN
+        self.language = LangTypes.RU if user.language_code in ['ru', 'uk', 'be'] else LangTypes.EN
 
     async def update(self, user: AIOgramUser) -> None:
         """Обновление данных о пользователе"""
