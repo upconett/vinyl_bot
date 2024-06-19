@@ -18,7 +18,7 @@ apt install ffmpeg
 Создайте `config.yaml`, запишите туда:
 ```yaml
 token: 'токен-вашего-бота'
-logfile: 'название-файла-для-логов.log'
+logdir: 'путь-для-логов'
 dbfile: 'название-файла-для-базы-данных.db'
 
 admins:

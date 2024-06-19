@@ -1,4 +1,6 @@
 import logging
+from logging.handlers import TimedRotatingFileHandler
+from datetime import datetime
 
 
 def disable_aiogram():
@@ -17,10 +19,13 @@ def set_format():
 
 def get_logger(logfile: str):
     logger = logging.getLogger('main')
-    handler = logging.FileHandler(
-        filename=logfile, 
+    handler = TimedRotatingFileHandler(
+        filename=logfile+f'/vinyl.log', 
+        when='s',
+        interval=5,
         encoding='utf-8'
     )
+    handler.suffix = datetime.now().strftime('%d.%m.%Y')
     formatter = logging.Formatter(
         fmt="%(asctime)s %(levelname)s %(message)s",
         datefmt="%d.%m.%y [%H:%M:%S]"
@@ -29,3 +34,5 @@ def get_logger(logfile: str):
     handler.setLevel(logging.INFO)
     logger.addHandler(handler)
     return logger
+
+
