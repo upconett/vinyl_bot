@@ -14,7 +14,7 @@ try:
 
     logging.disable_aiogram()
     logging.set_format()
-    logger = logging.get_logger(data['logfile'])
+    logger = logging.get_logger(data['logdir'])
 
     dbfile = data['dbfile']
 

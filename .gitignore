@@ -11,3 +11,5 @@ config.yaml
 template_images.json
 creation/res/
 res.zip
+logs/
+*.log*
