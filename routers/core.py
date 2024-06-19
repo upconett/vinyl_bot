@@ -30,7 +30,8 @@ async def message_start(message: Message, state: FSMContext):
     for key in data.keys():
         try: 
             if 'id' in key: 
-                await bot.delete_message(user.id, data[key])
+                try: await bot.delete_message(user.id, data[key])
+                except: await bot.delete_messages(user.id, data[key])
         except: pass
     await state.set_data({})
     await state.clear()
@@ -54,7 +55,8 @@ async def query_start(query: CallbackQuery, state: FSMContext):
     for key in data.keys():
         try:
             if 'id' in key:
-                await bot.delete_message(user.id, data[key])
+                try: await bot.delete_message(user.id, data[key])
+                except: await bot.delete_messages(user.id, data[key])
         except: pass
 
     try:
