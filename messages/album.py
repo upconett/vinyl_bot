@@ -1,10 +1,18 @@
 from database.models.User import LangTypes
-
+import time
 
 def create_album_template(lang: LangTypes):
     match lang:
         case LangTypes.RU: return 'Выбери тип шаблона'
         case LangTypes.EN: return 'Choose template'
+        
+
+def wait_for_photo(lang: LangTypes):
+    match lang:
+        case LangTypes.RU:
+            return 'Пришли фото без сжатия!\nУчти, что фото желательно скидывать разрешения X на Y иначе может получиться некрасиво'
+        case LangTypes.EN:
+            return 'Send uncompressed photo!\nKeep in mind that it is advisable to change photo resolutions X to Y, otherwise it may turn out ugly'
 
 
 def wait_single_photo(lang: LangTypes):
@@ -64,16 +72,20 @@ def wrong_photo_format(lang: LangTypes):
             )
         
 
-def creation_end(lang: LangTypes, time: int, queue: int):
+def creation_end(lang: LangTypes, wait: int, queue: int):
     match lang:
         case LangTypes.RU:
+            if wait <= 60: wait = f'{wait} секунд'
+            else: wait = time.strftime('%M минут %S секунд', time.gmtime(wait))
             return (
-                f'Супер, подожди {time} сек и твой альбом будет готов\n'
+                f'Супер, подожди {wait} и твой альбом будет готов\n'
                 f'Перед тобой в очереди {queue} человек'
             )
         case LangTypes.EN:
+            if wait <= 60: wait = f'{wait} seconds'
+            else: wait = time.strftime('%M minutes %S seconds', time.gmtime(wait))
             return (
-                f'Excellent, wait {time} seconds and your album will be ready\n'
+                f'Excellent, wait {wait} and your album will be ready\n'
                 f'It\'s {queue} people in queue before you'
             )
 

@@ -42,7 +42,7 @@ async def query_create_album(query: CallbackQuery, state: FSMContext):
         await query.answer(messages.no_free_albums(lang), show_alert=True)
         return
 
-    if cm.in_album_queue(user.id):
+    if await cm.in_album_queue(user.id):
         await query.answer(messages.album_query_block(lang), show_alert=True)
         return
 
@@ -188,12 +188,17 @@ async def query_wait_for_approve(query: CallbackQuery, state: FSMContext):
             await query.answer(messages.no_free_albums(lang), show_alert=True)
             return
 
-    if cm.in_album_queue(user.id):
+    if await cm.in_album_queue(user.id):
         await query.answer(messages.album_query_block(lang), show_alert=True)
         return
 
+    queue, wait = await cm.count_album_queue()
+
+    if data['template'] == 1: wait += 15
+    else: wait += 30
+
     await query.message.edit_text(
-        text=messages.creation_end(lang, 20, 0),
+        text=messages.creation_end(lang, wait, queue),
         reply_markup=keyboards_core.go_back(lang)
     )
 
@@ -225,7 +230,7 @@ async def query_wait_for_approve(query: CallbackQuery, state: FSMContext):
     except Exception as e:
         print(e)
         await add_free_albums(user)
-        if 'VOICE_MESSAGES_FORBIDDEN' in e.__str__():
+        if 'VOICE_MESSAGES_FORBIDDEN' in str(e):
             await query.message.answer(messages_core.voice_forbidden(lang))
         else:
             await query.message.answer(messages_core.error(lang))

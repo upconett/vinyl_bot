@@ -45,7 +45,7 @@ async def query_create_vinyl(query: CallbackQuery, state: FSMContext):
         await query.answer(messages.no_free_vinyl(lang), show_alert=True)
         return
         
-    if cm.in_vinyl_queue(user.id):
+    if await cm.in_vinyl_queue(user.id):
         await query.answer(messages.vinyl_query_block(lang), show_alert=True)
         return
 
@@ -256,6 +256,7 @@ async def message_wait_for_approve(message: Message, state: FSMContext):
         offset = message.text
     else:
         await message.answer(messages.wrong_format(lang))
+        await message.answer(messages.wrong_format(lang))
         return
 
     minutes, seconds = map(int, offset.split(':'))
@@ -289,14 +290,23 @@ async def query_end(query: CallbackQuery, state: FSMContext):
             await query.answer(messages.no_free_vinyl(lang), show_alert=True)
             return
 
-    if cm.in_vinyl_queue(user.id):
+    if await cm.in_vinyl_queue(user.id):
         await query.answer(messages.vinyl_query_block(lang), show_alert=True)
         return
 
+    queue, wait = await cm.count_vinyl_queue()
+
+    if data['template'] == 3:
+        if data['cover_type'] == 1: wait += 45
+        else: wait += 60 * 5
+    else:
+        if data['cover_type'] == 1: wait += 20
+        else: wait += 45
+
+
     await query.message.edit_text(
-        text=messages.creation_end(lang, 20, 0),
+        text=messages.creation_end(lang, wait, queue),
         reply_markup=keyboards_core.go_back(lang)
-        # TODO ------------- ADD seconds counter, queue counter
     )
 
     await state.clear()
@@ -331,7 +341,7 @@ async def query_end(query: CallbackQuery, state: FSMContext):
     except Exception as e:
         print(e)
         await add_free_vinyl(user)
-        if 'VOICE_MESSAGES_FORBIDDEN' in e:
+        if 'VOICE_MESSAGES_FORBIDDEN' in str(e):
             await query.message.answer(messages_core.voice_forbidden(lang))
         else:
             await query.message.answer(messages_core.error(lang))
@@ -352,7 +362,7 @@ async def query_get_player(query: CallbackQuery, state: FSMContext):
         await query.message.delete()
         return
 
-    if cm.in_player_queue(user.id):
+    if await cm.in_player_queue(user.id):
         await query.answer(messages.player_query_block(lang), show_alert=True)
         return
 
@@ -387,18 +397,24 @@ async def query_get_player_template(query: CallbackQuery, state: FSMContext):
         data = await state.get_data()
 
     unique_id, template = map(int, query.data.replace('player_template_', '').split('_'))
-    if cm.in_player_queue(user.id):
+    
+    if await cm.in_player_queue(user.id):
         await query.answer(messages.player_query_block(lang), show_alert=True)
         return
 
+    queue, wait = await cm.count_player_queue()
+
+    if template == 3: wait += 45
+    else: wait += 20
+
     try:
         await query.message.edit_caption(
-            caption=messages.player_get_ready(lang),
+            caption=messages.player_get_ready(lang, wait, queue),
             reply_markup=keyboards_core.go_back(lang)
         )
     except:
         await query.message.edit_text(
-            text=messages.player_get_ready(lang),
+            text=messages.player_get_ready(lang, wait, queue),
             reply_markup=keyboards_core.go_back(lang)
         )
 
@@ -427,7 +443,7 @@ async def query_get_player_template(query: CallbackQuery, state: FSMContext):
         await query.message.answer(messages.back_or_player(lang), reply_markup=keyboards.go_back_or_make(lang, unique_id))
     except Exception as e:
         print(e)
-        if 'VOICE_MESSAGES_FORBIDDEN' in e:
+        if 'VOICE_MESSAGES_FORBIDDEN' in str(e):
             await query.message.answer(messages_core.voice_forbidden(lang))
         else:
             await query.message.answer(messages_core.error(lang))

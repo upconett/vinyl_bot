@@ -1,5 +1,5 @@
 from database.models.User import LangTypes
-
+import time
 
 def create_vinyl(lang: LangTypes) -> str:
     match lang:
@@ -117,16 +117,20 @@ def error_start_time(lang: LangTypes) ->str:
         case LangTypes.EN:
             return 'The start time should not be longer than the audio length!'
 
-def creation_end(lang: LangTypes, time: int, queue: int):
+def creation_end(lang: LangTypes, wait: int, queue: int):
     match lang:
         case LangTypes.RU:
+            if wait <= 60: wait = f'{wait} секунд'
+            else: wait = time.strftime('%M минут %S секунд', time.gmtime(wait))
             return (
-                f'Супер, подожди {time} сек и пластинка будет готова\n'
+                f'Супер, подожди {wait} и пластинка будет готова\n'
                 f'Перед тобой в очереди {queue} человек'
             )
         case LangTypes.EN:
+            if wait <= 60: wait = f'{wait} seconds'
+            else: wait = time.strftime('%M minutes %S seconds', time.gmtime(wait))
             return (
-                f'Super, wait {time} seconds for your record to be ready\n'
+                f'Super, wait {wait} for your record to be ready\n'
                 f'It\'s {queue} people in queue before you'
             )
 
@@ -163,12 +167,23 @@ def player_types(lang: LangTypes):
             return 'Choose record player template to download'
 
         
-def player_get_ready(lang: LangTypes):
+def player_get_ready(lang: LangTypes, wait: int, queue: int):
     match lang:
         case LangTypes.RU:
-            return 'Ваш проигрыватель скоро будет готов ⌛'
+            if wait <= 60: wait = f'{wait} секунд'
+            else: wait = time.strftime('%M минут %S секунд', time.gmtime(wait))
+
+            return (
+                f'Подождите {wait}, ваш проигрыватель скоро будет готов ⌛'
+                f'\nПеред вами в очереди {queue} человек'
+            )
         case LangTypes.EN:
-            return 'Your record player will be ready soon ⌛'
+            if wait <= 60: wait = f'{wait} seconds'
+            else: wait = time.strftime('%M minutes %S seconds', time.gmtime(wait))
+            return (
+                f'Please, wait {wait}, your record player will be ready soon ⌛'
+                f'\nThere are {queue} people in queue'
+            )
 
 
 def player_done(lang: LangTypes):

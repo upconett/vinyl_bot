@@ -8,14 +8,14 @@ from database.models import User
 async def use_free_vinyl(user: AIOgramUser) -> None:
     async with AsyncSession(async_engine) as s:
         u = await s.get(User, {'id': user.id})
-        u.free_vinyl -= 1
+        if not u.subscription and u.free_vinyl > 0: u.free_vinyl -= 1
         await s.commit()
 
     
 async def add_free_vinyl(user: AIOgramUser) -> None:
     async with AsyncSession(async_engine) as s:
         u = await s.get(User, {'id': user.id})
-        u.free_vinyl += 1
+        if not u.subscription: u.free_vinyl += 1
         await s.commit()
 
 

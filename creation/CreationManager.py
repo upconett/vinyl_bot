@@ -52,10 +52,12 @@ class Album(Creation):
 @dataclass
 class Result(Creation):
     output_path: str | tuple[str, str]
+    exception: str | None
 
-    def __init__(self, creation: Vinyl | Album | Player):
+    def __init__(self, creation: Vinyl | Album | Player, exception: str = None):
         self.unique_id = creation.unique_id
         self.user_id = creation.user_id
+        self.exception = exception
 
     def __repr__(self):
         return f'Result {self.user_id, self.unique_id}'
@@ -158,6 +160,7 @@ class CreationManager():
                 break
         else:
             raise Exception("NOTHING V RESULTE")
+        if r.exception: raise r.exception
         self.resultVinyl = [r for r in self.resultVinyl if r != my]
         return r.output_path
 
@@ -174,6 +177,7 @@ class CreationManager():
                 break
         else:
             raise Exception("NOTHING V RESULTE")
+        if r.exception: raise r.exception
         self.resultPlayer = [r for r in self.resultPlayer if r != my]
         return r.output_path
 
@@ -190,6 +194,7 @@ class CreationManager():
                 break
         else:
             raise Exception("NOTHING V RESULTE")
+        if r.exception: raise r.exception
         self.resultAlbum = [r for r in self.resultAlbum if r != my]
         return r.output_path
 
@@ -219,6 +224,7 @@ class CreationManager():
                         vinyl.speed,
                         vinyl.noise
                     )
+        except Exception as e: result.exception = e
         finally:
             self.resultVinyl.append(result)
             self.creatingVinyl.remove(vinyl)
@@ -233,6 +239,7 @@ class CreationManager():
                 player.unique_id,
                 player.template
             )
+        except Exception as e: result.exception = e
         finally:
             self.resultPlayer.append(result)
             self.creatingPlayer.remove(player)
@@ -248,31 +255,62 @@ class CreationManager():
                 album.first_path,
                 album.second_path
             )
+        except Exception as e: result.exception = e
         finally:
             self.resultAlbum.append(result)
             self.creatingAlbum.remove(album)
             self.tasksAlbum = [t for t in self.tasksAlbum if not t.done()]
 
     
-    def in_player_queue(self, user_id: int):
+    async def in_player_queue(self, user_id: int):
         for c in self.queuePlayer:
             if c.user_id == user_id: return True
         for c in self.creatingPlayer:
             if c.user_id == user_id: return True
         return False
 
+    
+    async def count_player_queue(self) -> tuple[int, int]:
+        count = len(self.queuePlayer)
+        wait = 0
+        for e in self.queuePlayer:
+            wait += 20
+        return count, wait
 
-    def in_vinyl_queue(self, user_id: int):
+
+    async def in_vinyl_queue(self, user_id: int):
         for c in self.queueVinyl:
             if c.user_id == user_id: return True
         for c in self.creatingVinyl:
             if c.user_id == user_id: return True
         return False
 
+    
+    async def count_vinyl_queue(self) -> tuple[int, int]:
+        count = len(self.queueVinyl)
+        wait = 0
+        for e in self.queueVinyl:
+            if e.type == VinylTypes.PHOTO:
+                if e.template == 3: wait += 90
+                else: wait += 45
+            else:
+                if e.template == 3: wait += 60 * 6
+                else: wait += 60 * 3
+        return count, wait
 
-    def in_album_queue(self, user_id: int):
+
+    async def in_album_queue(self, user_id: int):
         for c in self.queueAlbum:
             if c.user_id == user_id: return True
         for c in self.creatingAlbum:
             if c.user_id == user_id: return True
         return False
+
+    
+    async def count_album_queue(self) -> tuple[int, int]:
+        count = len(self.queueAlbum)
+        wait = 0
+        for e in self.queueAlbum:
+            if e.template == 1: wait += 20
+            else: wait += 45
+        return count, wait
