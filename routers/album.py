@@ -99,7 +99,7 @@ async def query_wait_for_template(query: CallbackQuery, state: FSMContext):
 
 
 @router.message(StateFilter(CreationStates.wait_for_first_photo), F.document)
-async def message_wait_for_first_photo(message: Message, state: FSMContext):
+async def message_wait_for_first_photo_doc(message: Message, state: FSMContext):
     user = message.from_user
     await update_user(user)
     lang = await get_language(user)
@@ -128,12 +128,39 @@ async def message_wait_for_first_photo(message: Message, state: FSMContext):
     logger.info(f'@{user.username} sent first photo, id = {file_id}')
 
 
+@router.message(StateFilter(CreationStates.wait_for_first_photo), F.sticker)
+async def message_wait_for_first_photo_webp(message: Message, state: FSMContext):
+    user = message.from_user
+    await update_user(user)
+    lang = await get_language(user)
+    data = await state.get_data()
+
+    file_id = message.sticker.file_id
+    data['photos'] = [file_id]
+
+    last_message = await message.answer(
+        text=messages.wait_second_photo(lang),
+        reply_markup=keyboards_core.go_back(lang)
+    )
+    
+    await bot.delete_message(user.id, data['last_message_id'])
+
+    data['last_message_id'] = last_message.message_id
+
+    await state.set_data(data)
+    await state.set_state(CreationStates.wait_for_second_photo)
+    logger.info(f'@{user.username} sent first photo, id = {file_id}')
+
+
 @router.message(StateFilter(CreationStates.wait_for_single_photo, CreationStates.wait_for_second_photo), F.document)
 async def message_wait_for_singe_or_second_photo(message: Message, state: FSMContext):
     user = message.from_user
     await update_user(user)
     lang = await get_language(user)
     data = await state.get_data()
+
+    if message.document:
+        print('MIME TYPE', message.document.mime_type)
 
     if not (message.document and 'image' in message.document.mime_type):
         await message.answer(
@@ -142,6 +169,33 @@ async def message_wait_for_singe_or_second_photo(message: Message, state: FSMCon
         return
 
     file_id = message.document.file_id
+    if 'photos' in data.keys():
+        data['photos'].append(file_id)
+    else:
+        data['photos'] = [file_id]
+
+    last_message = await message.answer(
+        text=messages.create_album_approve(lang, data),
+        reply_markup=keyboards.create_album_approve(lang)
+    )
+
+    await bot.delete_message(user.id, data['last_message_id'])
+
+    data['last_message_id'] = last_message.message_id
+
+    await state.set_data(data)
+    await state.set_state(CreationStates.wait_for_approve)
+    logger.info(f'@{user.username} sent second or single photo, id = {file_id}')
+
+
+@router.message(StateFilter(CreationStates.wait_for_single_photo, CreationStates.wait_for_second_photo), F.sticker)
+async def message_wait_for_singe_or_second_photo(message: Message, state: FSMContext):
+    user = message.from_user
+    await update_user(user)
+    lang = await get_language(user)
+    data = await state.get_data()
+
+    file_id = message.sticker.file_id
     if 'photos' in data.keys():
         data['photos'].append(file_id)
     else:
