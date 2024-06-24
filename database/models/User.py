@@ -24,7 +24,7 @@ class User(BaseModel):
     language: Mapped[LangTypes]
     active: Mapped[bool] = mapped_column(default=True)
 
-    free_vinyl: Mapped[int] = mapped_column(default=5)
+    free_vinyl: Mapped[int] = mapped_column(default=1)
     free_albums: Mapped[int] = mapped_column(default=1)
 
     subscription: Mapped[Subscription] = relationship(

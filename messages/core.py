@@ -24,6 +24,7 @@ def start(lang: LangTypes, user: AIOgramUser) -> str:
 
 def profile(lang: LangTypes, profile_data: ProfileData) -> str:
     pd = profile_data
+    print(pd)
     match lang:
         case LangTypes.RU:
             return (
@@ -31,8 +32,8 @@ def profile(lang: LangTypes, profile_data: ProfileData) -> str:
                 f'Подписка: {"✅" if pd.subscribed else "❌"}\n' +
                 (f"Истекает: {pd.expires_at}\n" if pd.subscribed else "") +
                 '\n' +
-                f'Бесплатных пластинок: {pd.free_vinyl}\n' +
-                f'Бесплатных альбомов: {pd.free_albums}\n'
+                (f'Бесплатных пластинок: {pd.free_vinyl}\n' if not pd.subscribed else "") +
+                (f'Бесплатных альбомов: {pd.free_albums}\n' if not pd.subscribed else "")
             )
         case LangTypes.EN:
             return (
@@ -40,8 +41,8 @@ def profile(lang: LangTypes, profile_data: ProfileData) -> str:
                 f'Subscription: {"✅" if pd.subscribed else "❌"}\n' +
                 (f"Expires At: {pd.expires_at}\n" if pd.subscribed else "") +
                 '\n' +
-                f'Free Vinyl: {pd.free_vinyl}\n' +
-                f'Free Albums: {pd.free_albums}\n'
+                (f'Free Vinyl: {pd.free_vinyl}\n') if not pd.subscribed else "" +
+                (f'Free Albums: {pd.free_albums}\n') if not pd.subscribed else ""
             )
 
 

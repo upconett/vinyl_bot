@@ -82,7 +82,7 @@ async def message_wait_for_audio(message: Message, state: FSMContext):
             return
 
         data['audio_file_id'] = file.file_id
-
+        data['duration'] = file.duration
         images = get_image('templates_vinyl')
         if images:
             photo_messages = await message.answer_media_group(media=[
@@ -255,9 +255,14 @@ async def message_wait_for_approve(message: Message, state: FSMContext):
             message.text.count(':') == 1 and all(x.isdigit() for x in message.text.replace(':', '')):
         offset = message.text
     else:
-        await message.answer(await messages.wrong_format(lang))
+        await message.answer(messages.wrong_format(lang))
         return
 
+    minutes, seconds = map(int, offset.split(':'))
+    duration = minutes * 60 + seconds
+    if not duration<=data['duration']:
+        await message.answer(messages.error_start_time(lang))
+        return
     data['offset'] = offset
 
     await message.answer(
@@ -318,6 +323,7 @@ async def query_end(query: CallbackQuery, state: FSMContext):
         await query.message.answer_video_note(
             video_note=BufferedInputFile(open(circle, 'rb').read(), filename='vinyl for you')
         )
+        os.remove(circle)
         await query.message.answer(
             text=messages.get_player(lang),
             reply_markup=keyboards.get_player(lang, unique_id)
@@ -381,7 +387,6 @@ async def query_get_player_template(query: CallbackQuery, state: FSMContext):
         data = await state.get_data()
 
     unique_id, template = map(int, query.data.replace('player_template_', '').split('_'))
-    
     if cm.in_player_queue(user.id):
         await query.answer(messages.player_query_block(lang), show_alert=True)
         return
@@ -400,14 +405,26 @@ async def query_get_player_template(query: CallbackQuery, state: FSMContext):
     await bot.delete_messages(user.id, data['photo_ids'])
 
     await state.clear()
-
+    # match template:
+    #     case 1:
+    #         width = 1080
+    #         height = 1920
+    #     case 2:
+    #         width = 1080
+    #         height = 1920
+    #     case 3:
+    #         width = 2276
+    #         height = 1518
     try:
         video_path = await cm.createPlayer(Player(user.id, unique_id, template))
 
-        await query.message.answer_video(
-            video=BufferedInputFile(open(video_path, 'rb').read(), filename='player for you'),
-            caption=messages.player_done(lang)
-        )
+        # await query.message.answer_video(
+        #     video=BufferedInputFile(open(video_path, 'rb').read(), filename='player for you'),
+        #     caption=messages.player_done(lang), reply_markup=keyboards_core.go_back(lang),
+        #     width=width, height=height, supports_streaming=True
+        # )
+        await query.message.answer_document(document=BufferedInputFile(open(video_path, 'rb').read(), filename='player for you.mp4'), filename='player for you.mp4', disable_content_type_detection=True)
+        await query.message.answer(messages.back_or_player(lang), reply_markup=keyboards.go_back_or_make(lang, unique_id))
     except Exception as e:
         print(e)
         if 'VOICE_MESSAGES_FORBIDDEN' in e:

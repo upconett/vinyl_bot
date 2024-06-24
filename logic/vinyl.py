@@ -23,7 +23,7 @@ async def check_sub_or_free_vinyl(user: AIOgramUser) -> bool:
     """Проверка есть ли у пользователя подписка или бесплатные пластинки"""
     async with AsyncSession(async_engine) as s:
         u = await s.get(User, {'id': user.id})
-        return (u.subscription is not None or u.free_vinyl != 0)
+        return (u.subscription is not None or u.free_vinyl > 0)
 
 
 async def check_sub(user: AIOgramUser) -> bool:

@@ -44,7 +44,6 @@ async def query_start(query: CallbackQuery, state: FSMContext):
     user = query.from_user
     await update_user(user)
     lang = await get_language(user)
-
     data = await state.get_data()
 
     await query.message.answer(

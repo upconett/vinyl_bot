@@ -1,17 +1,6 @@
 import os
 import subprocess
-import datetime
-def time_count(func):
-    def wrapper(*args, **kwargs):
-        time_start = datetime.datetime.now()
-        print(f'Запускаю {func}')
-        result = func(*args, **kwargs)
-        print(f'Закончил {datetime.datetime.now() - time_start}')
-        print('________________________\n')
-        return result
 
-    return wrapper
-@time_count
 def make_background_video(user_id, video_path):
     command = [
         "ffmpeg",
@@ -31,7 +20,7 @@ def make_background_video(user_id, video_path):
     ]
     subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return f"creation/video/{user_id}_player_back.mp4"
-@time_count
+
 def paste_needle(user_id, video_path):
     # 04fc44
     command = [

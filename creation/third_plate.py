@@ -5,20 +5,40 @@ import os
 
 
 
+def get_audio_duration(video_path):
+    result = subprocess.run(
+        ['ffprobe', '-i', video_path, '-show_entries', 'format=duration', '-v', 'quiet', '-of', 'csv=p=0'],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+    duration = float(result.stdout)
+    return int(duration) if duration<60 else 60
+
 def cut_audio(user_id, audio_path, start_time):
     '''Обрезаем аудио до 1 минуты'''
+    duration = get_audio_duration(audio_path)
     command = [
         'ffmpeg',
         '-y',
         '-i', audio_path,
         '-map', '0:a:0',
         '-ss', start_time,
-        '-t', '00:00:59',
+        '-t', '00:01:00',
+        '-acodec', 'libmp3lame',
+        f'creation/audio/{user_id}_audio1m_temp.mp3'
+    ]
+    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    os.remove(audio_path)
+    command = [
+        'ffmpeg',
+        '-y',
+        '-i', f'creation/audio/{user_id}_audio1m_temp.mp3',
+        '-af', f"afade=t=in:st=0:d=5,afade=t=out:st={duration-1.5}:d=1.5",
         '-acodec', 'libmp3lame',
         f'creation/audio/{user_id}_audio1m.mp3'
     ]
     subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    os.remove(audio_path)
+    os.remove(f'creation/audio/{user_id}_audio1m_temp.mp3')
     return f'creation/audio/{user_id}_audio1m.mp3'
 
 
@@ -55,12 +75,12 @@ def overlay_photo(user_id, photo_name):
     command = [
         'ffmpeg',
         '-y',
-        '-i', photo_name,  # Убедитесь, что photo_name содержит правильный путь к изображению
-        '-i', 'creation/res/paper_overlay_small.png',
+        '-i', photo_name,
+        '-i', 'creation/res/paper_overlay.png',
         '-i', 'creation/res/light2.png',
         '-filter_complex',
         "[0:v]format=yuv420p[base];[1:v]setsar=1[overlay1];[base][overlay1]blend=all_mode='overlay':repeatlast=0[temp1];[temp1][2:v]overlay=W-w-0:H-h-0",
-        f'creation/img/{user_id}_paper.png'  # Путь для сохранения результата
+        f'creation/img/{user_id}_paper.png'
     ]
     subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     os.remove(photo_name)
@@ -134,23 +154,32 @@ def make_video(user_id, video_path, noise):
         '-y',
         '-i', f'creation/video/{user_id}_background.mp4',
         '-i', 'creation/res/needle-min.png',
-        '-filter_complex', '[0:v][1:v]overlay=0:0',
+        '-filter_complex', '[1]format=rgba,colorchannelmixer=aa=0.9[fg];[0:v][fg]overlay=0:0',
         '-c:v', 'libx264',
         '-c:a', 'aac',
         f'creation/video/{user_id}_output_video.mp4'
+    ]
+    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    command = [
+        'ffmpeg',
+        '-y',
+        '-i', f'creation/video/{user_id}_background.mp4',
+        '-i', 'creation/res/put2.png',
+        '-filter_complex', '[0:v][1:v]overlay=0:0',
+        '-r', '24',
+        f'creation/video/{user_id}_output_video_1m_round_temp.mp4'
     ]
     subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     os.remove(f'creation/video/{user_id}_background.mp4')
     command = [
         'ffmpeg',
         '-y',
-        '-i', f'creation/video/{user_id}_output_video.mp4',
-        '-i', 'creation/res/put2.png',
-        '-filter_complex', '[0:v][1:v]overlay=0:0,scale=640:640,fps=25',
-        '-c:v', 'libx264',
-        '-c:a', 'aac',
-        '-crf', '28',
+        '-i', f'creation/video/{user_id}_output_video_1m_round_temp.mp4',
+        '-vf', 'scale=640:640',
+        '-preset', 'veryslow',
+        '-crf', '30',
         f'creation/video/{user_id}_output_video_1m_round.mp4'
     ]
     subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    os.remove(f'creation/video/{user_id}_output_video_1m_round_temp.mp4')
     return (f'creation/video/{user_id}_output_video.mp4', f'creation/video/{user_id}_output_video_1m_round.mp4')

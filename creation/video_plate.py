@@ -1,7 +1,6 @@
 from creation import first_video_plate
 from creation import second_video_plate
 from creation import third_video_plate
-import datetime
 
 '''Модуль для создания пластинок с видео
 video - туда сохраняются готовые видосы
@@ -10,19 +9,8 @@ audio - там все аудио
 users_video - там видосы юзеров'''
 
 
-def time_count(func):
-    def wrapper(*args, **kwargs):
-        time_start = datetime.datetime.now()
-        print(f'Запускаю {func}')
-        result = func(*args, **kwargs)
-        print(f'Закончил {func} за {datetime.datetime.now() - time_start}')
-        print('________________________\n')
-        return result
-
-    return wrapper
 
 
-@time_count
 def make_first_plate_video(user_id,  video_path, audio_path, start_time, speed, noise):
     '''Запускаем эту функцию для создания видео первой пластинки (НО В ЦЕНТРЕ ВИДЕО)
         user_id: id пользователя(создаем подпапки с этим id, чтобы ориентироваться какой файл какому юзеру принадлежат),
@@ -39,8 +27,6 @@ def make_first_plate_video(user_id,  video_path, audio_path, start_time, speed, 
     return final_video
 
 
-
-@time_count
 def make_second_plate_video(user_id,  video_path, audio_path, start_time, speed, noise):
     '''Запускаем эту функцию для создания видео первой пластинки (НО В ЦЕНТРЕ ВИДЕО)
         user_id: id пользователя(создаем подпапки с этим id, чтобы ориентироваться какой файл какому юзеру принадлежат),
@@ -55,8 +41,6 @@ def make_second_plate_video(user_id,  video_path, audio_path, start_time, speed,
     video = second_video_plate.make_video(user_id, crop,audio, noise)
     return video
 
-
-@time_count
 def make_third_plate_video(user_id,  video_path, audio_path, start_time, speed, noise):
     '''Запускаем эту функцию для создания видео третей пластинки (НО В ЦЕНТРЕ ВИДЕО)
         user_id: id пользователя(создаем подпапки с этим id, чтобы ориентироваться какой файл какому юзеру принадлежат),

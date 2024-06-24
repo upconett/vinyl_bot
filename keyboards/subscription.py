@@ -26,9 +26,9 @@ async def subscription_rate(lang: LangTypes) -> InlineKeyboardMarkup:
         ))
 
     keyboard = InlineKeyboardBuilder()
-    keyboard.button(text=texts[0] + ' | 1 ⭐', url=await invoice(1, 1))
-    keyboard.button(text=texts[1] + ' | 2 ⭐', url=await invoice(6, 2))
-    keyboard.button(text=texts[2] + ' | 3 ⭐', url=await invoice(12, 3))
+    keyboard.button(text=texts[0] + ' | 150 ⭐', url=await invoice(1, 150))
+    keyboard.button(text=texts[1] + ' | 720 ⭐', url=await invoice(6, 720))
+    keyboard.button(text=texts[2] + ' | 1260 ⭐', url=await invoice(12, 1260))
     keyboard.button(text=texts[3], callback_data='profile')
     keyboard.adjust(1, repeat=True)
     return keyboard.as_markup()

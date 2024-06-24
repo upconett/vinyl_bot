@@ -110,6 +110,12 @@ def wrong_format(lang: LangTypes) -> str:
         case LangTypes.EN:
             return 'Invalid format!'
 
+def error_start_time(lang: LangTypes) ->str:
+    match lang:
+        case LangTypes.RU:
+            return 'Время начала не должно быть больше длинны аудио!'
+        case LangTypes.EN:
+            return 'The start time should not be longer than the audio length!'
 
 def creation_end(lang: LangTypes, time: int, queue: int):
     match lang:
@@ -173,6 +179,13 @@ def player_done(lang: LangTypes):
             return 'Your record player ready ✅'
 
 
+def back_or_player(lang: LangTypes):
+    match lang:
+        case LangTypes.RU:
+            return 'Хотите сделать еще проигрыватель или вернуться?'
+        case LangTypes.EN:
+            return 'Do you want to make another turntable or go back?'
+
 def vinyl_query_block(lang: LangTypes):
     match lang:
         case LangTypes.RU:
@@ -195,3 +208,5 @@ def too_big_video(lang: LangTypes):
             return 'Размер видео не должен привышать 10Мб\nПришлите, пожалуйста, другое видео или фото'
         case LangTypes.EN:
             return 'Video size can\'t be more than 10Mb\nPlease, send another video or photo'
+
+

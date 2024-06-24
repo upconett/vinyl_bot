@@ -61,6 +61,7 @@ async def pre_checkout(pre_checkout_query: PreCheckoutQuery):
     try:
         await add_subscription(user, rate)
         await pre_checkout_query.answer(ok=True)
+        await pre_checkout_query.bot.send_message(43441385, f'Пользователь @{user.username} оформил подписку на {rate} месяцев')
     except Exception as e:
         await pre_checkout_query.answer(ok=False, error_message=e)
 

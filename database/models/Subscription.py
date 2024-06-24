@@ -19,7 +19,6 @@ class Subscription(BaseModel):
     type: Mapped[SubType]
     expires_at: Mapped[datetime | None]
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'))
-
     def __init__(self, type: SubType):
         super().__init__()
         match type:
@@ -34,4 +33,4 @@ class Subscription(BaseModel):
         self.expires_at = expires_at
         
     def __repr__(self) -> str:
-        return f'Subscription(id={self.id!r}, type={self.type.value}, expires={self.expires_at!r})'
+        return f'Subscription(id={self.id!r}, type={self.type.value}, expires={self.expires_at!r}, created_at={self.created_at})'
