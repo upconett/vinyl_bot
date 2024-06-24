@@ -10,8 +10,27 @@ def create_vinyl(lang: LangTypes) -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardBuilder()
     keyboard.button(text=text, callback_data='start')
     return keyboard.as_markup()
+from aiogram.types import InlineKeyboardMarkup
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+
+from database.models.User import LangTypes
+
+def create_vinyl(lang: LangTypes) -> InlineKeyboardMarkup:
+    match lang:
+        case LangTypes.RU: text = 'Назад'
+        case LangTypes.EN: text = 'Back'
+    keyboard = InlineKeyboardBuilder()
+    keyboard.button(text=text, callback_data='start')
+    return keyboard.as_markup()
 
 
+def create_vinyl_template(lang: LangTypes) -> InlineKeyboardMarkup:
+    match lang:
+        case LangTypes.RU: text = 'Назад'
+        case LangTypes.EN: text = 'Back'
+    keyboard = InlineKeyboardBuilder()
+    for x in range(1, 4):
+        keyboard.button(
 def create_vinyl_template(lang: LangTypes) -> InlineKeyboardMarkup:
     match lang:
         case LangTypes.RU: text = 'Назад'

@@ -12,7 +12,7 @@ try:
     token: str = data['token']
     admins: list = data['admins']
 
-    # logging.disable_aiogram()
+    logging.disable_aiogram()
     logging.set_format()
     logger = logging.get_logger(data['logdir'])
 

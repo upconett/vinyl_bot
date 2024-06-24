@@ -1,17 +1,25 @@
 from aiogram.dispatcher.router import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
 from aiogram import F
 from aiogram.types import *
 
 import messages.subscription
 from create_bot import logger, bot
 from messages import subscription as messages
+import messages.subscription
+from create_bot import logger, bot
+from messages import subscription as messages
 from keyboards import subscription as keyboards
+from keyboards import core as keyboards_core
 from keyboards import core as keyboards_core
 
 from logic.subscription import add_subscription
+from logic.subscription import add_subscription
 from logic.core import *
+from logic.vinyl import *
 from logic.vinyl import *
 
 
@@ -22,7 +30,12 @@ class SubscriptionStates(StatesGroup):
     buying = State()
 
 
+class SubscriptionStates(StatesGroup):
+    buying = State()
+
+
 @router.callback_query(F.data == 'subscription')
+async def query_subscription_rate(query: CallbackQuery, state: FSMContext):
 async def query_subscription_rate(query: CallbackQuery, state: FSMContext):
     user = query.from_user
     await update_user(user)
@@ -36,7 +49,19 @@ async def query_subscription_rate(query: CallbackQuery, state: FSMContext):
     message_to_edit = await query.message.edit_text(
         text=messages.subscription_rate(lang),
         reply_markup=await keyboards.subscription_rate(lang)
+    await update_user(user)
+    lang = await get_language(user)
+
+    if await check_sub(user):
+        await query.answer(messages.subscription_already(lang), show_alert=True)
+        logger.info(f'@{user.username} is already subscribed')
+        return
+
+    message_to_edit = await query.message.edit_text(
+        text=messages.subscription_rate(lang),
+        reply_markup=await keyboards.subscription_rate(lang)
     )
+    await state.set_data({'message_to_edit': message_to_edit.message_id})
     await state.set_data({'message_to_edit': message_to_edit.message_id})
     logger.info(f'@{user.username} called subscription')
     await state.set_state(SubscriptionStates.buying)

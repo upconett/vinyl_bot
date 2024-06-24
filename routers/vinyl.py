@@ -5,7 +5,11 @@ from aiogram.types import *
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 import json, os
+import json, os
 
+from create_bot import logger, bot, cm
+from messages import vinyl as messages
+from messages import core as messages_core
 from create_bot import logger, bot, cm
 from messages import vinyl as messages
 from messages import core as messages_core
@@ -15,8 +19,14 @@ from utility.template_images import get_image
 from creation.CreationManager import Vinyl, Player, VinylTypes
 
 from creation.asyncio import get_unique_id, make_classic_vinyl, make_video_vinyl, make_player_vinyl
+from keyboards import core as keyboards_core
+from utility.template_images import get_image
+from creation.CreationManager import Vinyl, Player, VinylTypes
+
+from creation.asyncio import get_unique_id, make_classic_vinyl, make_video_vinyl, make_player_vinyl
 
 from logic.core import *
+from logic.vinyl import *
 from logic.vinyl import *
 
 
@@ -25,6 +35,14 @@ router = Router(name='vinyl')
 class CreationStates(StatesGroup):
     wait_for_audio = State()
     wait_for_template = State()
+    wait_for_cover = State()
+    wait_for_noise = State()
+    wait_for_speed = State()
+    wait_for_offset = State()
+    wait_for_approve = State()
+    wait_for_player = State()
+
+    album = State()
     wait_for_cover = State()
     wait_for_noise = State()
     wait_for_speed = State()
@@ -52,6 +70,8 @@ async def query_create_vinyl(query: CallbackQuery, state: FSMContext):
     await state.set_state(CreationStates.wait_for_audio)
 
     query_message = await query.message.edit_text(
+        text=messages.create_vinyl(lang),
+        reply_markup=keyboards.create_vinyl(lang)
         text=messages.create_vinyl(lang),
         reply_markup=keyboards.create_vinyl(lang)
     )
@@ -139,8 +159,35 @@ async def message_wait_for_cover(message: Message, state: FSMContext):
     user = message.from_user
     await update_user(user)
     lang = await get_language(user)
+    await update_user(user)
+    lang = await get_language(user)
     data = await state.get_data()
 
+    if message.document: 
+        await message.answer(messages.cover_failure(lang))
+        logger.info(f'@{user.username} sent document and got rejected')
+        return
+
+    cover_type = ''
+
+    if message.photo: 
+        file_id = message.photo[-1].file_id
+        cover_type = 1
+    elif message.video:
+        if message.video.file_size > 1_048_576 * 10: # 10MB
+            print(message.video.file_size)
+            await message.answer(messages.too_big_video(lang))
+            return
+        file_id = message.video.file_id
+        cover_type = 2
+
+    data['cover_file_id'] = file_id
+    data['cover_type'] = cover_type
+
+    await message.answer(
+        text=messages.create_vinyl_noise(lang, cover_type),
+        reply_markup=keyboards.create_vinyl_noise(lang)
+    )
     if message.document: 
         await message.answer(messages.cover_failure(lang))
         logger.info(f'@{user.username} sent document and got rejected')
@@ -269,7 +316,12 @@ async def message_wait_for_approve(message: Message, state: FSMContext):
     await message.answer(
         text=messages.create_vinyl_approve(lang, data),
         reply_markup=keyboards.create_vinyl_approve(lang)
+        text=messages.create_vinyl_approve(lang, data),
+        reply_markup=keyboards.create_vinyl_approve(lang)
     )
+
+    await bot.delete_message(user.id, data['query_message_id'])
+
 
     await bot.delete_message(user.id, data['query_message_id'])
 
