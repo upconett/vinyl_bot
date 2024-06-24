@@ -1,5 +1,5 @@
 from database.models.User import LangTypes
-
+import time
 
 def create_album_template(lang: LangTypes):
     match lang:
@@ -18,30 +18,29 @@ def wait_for_photo(lang: LangTypes):
 def wait_single_photo(lang: LangTypes):
     match lang:
         case LangTypes.RU:
-            return 'Пришли мне фото которое будет на альбоме\n'
+            return 'Пришли мне фото которое будет на альбоме(В виде файла)\nУчти, что фото желательно горизонтальное фото, иначе может получиться некрасиво'
         case LangTypes.EN:
-            return 'Send me a photo for album cover\n'
+            return 'Send me a photo for album cover(File)\nKeep in mind that the photo is preferably a horizontal photo, otherwise it may turn out ugly'
     
 
 def wait_first_photo(lang: LangTypes):
     match lang:
         case LangTypes.RU:
-            return 'Пришли мне фото для левой страницы\n'
+            return 'Пришли мне фото для левой страницы(В виде файла)\nУчти, что фото желательно вертикальное фото, иначе может получиться некрасиво'
         case LangTypes.EN:
-            return 'Send me a photo for the left page of the album\n'
+            return 'Send me a photo for the left page of the album(File)\nKeep in mind that the photo is preferably a vertical photo, otherwise it may turn out ugly'
 
 
 def wait_second_photo(lang: LangTypes):
     match lang:
         case LangTypes.RU:
             return (
-                'Теперь пришли мне фото для правой страницы\n'
-                'Учти, что фото желательно скидывать разрешения X на Y иначе может получиться некрасиво'
+                'Теперь пришли мне фото для правой страницы(В виде файла)\nУчти, что фото желательно вертикальное фото, иначе может получиться некрасиво'
             )
         case LangTypes.EN:
             return (
-                'Now send me photo for right page of the album\n'
-                'Keep in mind that it is advisable to change photo resolutions X to Y, otherwise it may turn out ugly'
+                'Now send me photo for right page of the album(File)\n'
+                'Keep in mind that the photo is preferably a vertical photo, otherwise it may turn out ugly'
             )
 
 
@@ -63,26 +62,30 @@ def wrong_photo_format(lang: LangTypes):
     match lang:
         case LangTypes.RU:
             return (
-                'Пожалуйста, пришлите фото без сжатия\n'
+                'Пожалуйста, пришлите фото без сжатия весом менее 20 мбайт\n'
                 'Или введите /start, чтобы отменить создание альбома'
             )
         case LangTypes.EN:
             return (
-                'Please, send uncompressed photo\n'
+                'Please, send uncompressed photo less than 20 MB\n'
                 'Or use /start to cancel album creation'
             )
         
 
-def creation_end(lang: LangTypes, time: int, queue: int):
+def creation_end(lang: LangTypes, wait: int, queue: int):
     match lang:
         case LangTypes.RU:
+            if wait <= 60: wait = f'{wait} секунд'
+            else: wait = time.strftime('%M минут %S секунд', time.gmtime(wait))
             return (
-                f'Супер, подожди {time} сек и твой альбом будет готов\n'
+                f'Супер, подожди {wait} и твой альбом будет готов\n'
                 f'Перед тобой в очереди {queue} человек'
             )
         case LangTypes.EN:
+            if wait <= 60: wait = f'{wait} seconds'
+            else: wait = time.strftime('%M minutes %S seconds', time.gmtime(wait))
             return (
-                f'Excellent, wait {time} seconds and your album will be ready\n'
+                f'Excellent, wait {wait} and your album will be ready\n'
                 f'It\'s {queue} people in queue before you'
             )
 
@@ -90,7 +93,7 @@ def creation_end(lang: LangTypes, time: int, queue: int):
 def no_free_albums(lang: LangTypes):
     match lang:
         case LangTypes.RU:
-            return '🌠 Подпишитесь, чтобы создать новые альбомы'
+            return '🌠 Оформите подписку, чтобы создать новые альбомы'
         case LangTypes.EN:
             return '🌠 Subscribe to create new albums'
 

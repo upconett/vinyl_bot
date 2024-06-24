@@ -5,7 +5,11 @@ from aiogram.types import *
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 import json, os
+import json, os
 
+from create_bot import logger, bot, cm
+from messages import vinyl as messages
+from messages import core as messages_core
 from create_bot import logger, bot, cm
 from messages import vinyl as messages
 from messages import core as messages_core
@@ -15,8 +19,14 @@ from utility.template_images import get_image
 from creation.CreationManager import Vinyl, Player, VinylTypes
 
 from creation.asyncio import get_unique_id, make_classic_vinyl, make_video_vinyl, make_player_vinyl
+from keyboards import core as keyboards_core
+from utility.template_images import get_image
+from creation.CreationManager import Vinyl, Player, VinylTypes
+
+from creation.asyncio import get_unique_id, make_classic_vinyl, make_video_vinyl, make_player_vinyl
 
 from logic.core import *
+from logic.vinyl import *
 from logic.vinyl import *
 
 
@@ -25,6 +35,14 @@ router = Router(name='vinyl')
 class CreationStates(StatesGroup):
     wait_for_audio = State()
     wait_for_template = State()
+    wait_for_cover = State()
+    wait_for_noise = State()
+    wait_for_speed = State()
+    wait_for_offset = State()
+    wait_for_approve = State()
+    wait_for_player = State()
+
+    album = State()
     wait_for_cover = State()
     wait_for_noise = State()
     wait_for_speed = State()
@@ -45,13 +63,15 @@ async def query_create_vinyl(query: CallbackQuery, state: FSMContext):
         await query.answer(messages.no_free_vinyl(lang), show_alert=True)
         return
         
-    if cm.in_vinyl_queue(user.id):
+    if await cm.in_vinyl_queue(user.id):
         await query.answer(messages.vinyl_query_block(lang), show_alert=True)
         return
 
     await state.set_state(CreationStates.wait_for_audio)
 
     query_message = await query.message.edit_text(
+        text=messages.create_vinyl(lang),
+        reply_markup=keyboards.create_vinyl(lang)
         text=messages.create_vinyl(lang),
         reply_markup=keyboards.create_vinyl(lang)
     )
@@ -82,7 +102,7 @@ async def message_wait_for_audio(message: Message, state: FSMContext):
             return
 
         data['audio_file_id'] = file.file_id
-
+        data['duration'] = file.duration
         images = get_image('templates_vinyl')
         if images:
             photo_messages = await message.answer_media_group(media=[
@@ -139,8 +159,35 @@ async def message_wait_for_cover(message: Message, state: FSMContext):
     user = message.from_user
     await update_user(user)
     lang = await get_language(user)
+    await update_user(user)
+    lang = await get_language(user)
     data = await state.get_data()
 
+    if message.document: 
+        await message.answer(messages.cover_failure(lang))
+        logger.info(f'@{user.username} sent document and got rejected')
+        return
+
+    cover_type = ''
+
+    if message.photo: 
+        file_id = message.photo[-1].file_id
+        cover_type = 1
+    elif message.video:
+        if message.video.file_size > 1_048_576 * 10: # 10MB
+            print(message.video.file_size)
+            await message.answer(messages.too_big_video(lang))
+            return
+        file_id = message.video.file_id
+        cover_type = 2
+
+    data['cover_file_id'] = file_id
+    data['cover_type'] = cover_type
+
+    await message.answer(
+        text=messages.create_vinyl_noise(lang, cover_type),
+        reply_markup=keyboards.create_vinyl_noise(lang)
+    )
     if message.document: 
         await message.answer(messages.cover_failure(lang))
         logger.info(f'@{user.username} sent document and got rejected')
@@ -255,15 +302,26 @@ async def message_wait_for_approve(message: Message, state: FSMContext):
             message.text.count(':') == 1 and all(x.isdigit() for x in message.text.replace(':', '')):
         offset = message.text
     else:
-        await message.answer(await messages.wrong_format(lang))
+        await message.answer(messages.wrong_format(lang))
+        await message.answer(messages.wrong_format(lang))
         return
 
+    minutes, seconds = map(int, offset.split(':'))
+    duration = minutes * 60 + seconds
+    if not duration<=data['duration']:
+        await message.answer(messages.error_start_time(lang))
+        return
     data['offset'] = offset
 
     await message.answer(
         text=messages.create_vinyl_approve(lang, data),
         reply_markup=keyboards.create_vinyl_approve(lang)
+        text=messages.create_vinyl_approve(lang, data),
+        reply_markup=keyboards.create_vinyl_approve(lang)
     )
+
+    await bot.delete_message(user.id, data['query_message_id'])
+
 
     await bot.delete_message(user.id, data['query_message_id'])
 
@@ -284,14 +342,23 @@ async def query_end(query: CallbackQuery, state: FSMContext):
             await query.answer(messages.no_free_vinyl(lang), show_alert=True)
             return
 
-    if cm.in_vinyl_queue(user.id):
+    if await cm.in_vinyl_queue(user.id):
         await query.answer(messages.vinyl_query_block(lang), show_alert=True)
         return
 
+    queue, wait = await cm.count_vinyl_queue()
+
+    if data['template'] == 3:
+        if data['cover_type'] == 1: wait += 45
+        else: wait += 60 * 5
+    else:
+        if data['cover_type'] == 1: wait += 20
+        else: wait += 45
+
+
     await query.message.edit_text(
-        text=messages.creation_end(lang, 20, 0),
+        text=messages.creation_end(lang, wait, queue),
         reply_markup=keyboards_core.go_back(lang)
-        # TODO ------------- ADD seconds counter, queue counter
     )
 
     await state.clear()
@@ -318,6 +385,7 @@ async def query_end(query: CallbackQuery, state: FSMContext):
         await query.message.answer_video_note(
             video_note=BufferedInputFile(open(circle, 'rb').read(), filename='vinyl for you')
         )
+        os.remove(circle)
         await query.message.answer(
             text=messages.get_player(lang),
             reply_markup=keyboards.get_player(lang, unique_id)
@@ -325,7 +393,7 @@ async def query_end(query: CallbackQuery, state: FSMContext):
     except Exception as e:
         print(e)
         await add_free_vinyl(user)
-        if 'VOICE_MESSAGES_FORBIDDEN' in e:
+        if 'VOICE_MESSAGES_FORBIDDEN' in str(e):
             await query.message.answer(messages_core.voice_forbidden(lang))
         else:
             await query.message.answer(messages_core.error(lang))
@@ -346,7 +414,7 @@ async def query_get_player(query: CallbackQuery, state: FSMContext):
         await query.message.delete()
         return
 
-    if cm.in_player_queue(user.id):
+    if await cm.in_player_queue(user.id):
         await query.answer(messages.player_query_block(lang), show_alert=True)
         return
 
@@ -382,35 +450,52 @@ async def query_get_player_template(query: CallbackQuery, state: FSMContext):
 
     unique_id, template = map(int, query.data.replace('player_template_', '').split('_'))
     
-    if cm.in_player_queue(user.id):
+    if await cm.in_player_queue(user.id):
         await query.answer(messages.player_query_block(lang), show_alert=True)
         return
 
+    queue, wait = await cm.count_player_queue()
+
+    if template == 3: wait += 45
+    else: wait += 20
+
     try:
         await query.message.edit_caption(
-            caption=messages.player_get_ready(lang),
+            caption=messages.player_get_ready(lang, wait, queue),
             reply_markup=keyboards_core.go_back(lang)
         )
     except:
         await query.message.edit_text(
-            text=messages.player_get_ready(lang),
+            text=messages.player_get_ready(lang, wait, queue),
             reply_markup=keyboards_core.go_back(lang)
         )
 
     await bot.delete_messages(user.id, data['photo_ids'])
 
     await state.clear()
-
+    # match template:
+    #     case 1:
+    #         width = 1080
+    #         height = 1920
+    #     case 2:
+    #         width = 1080
+    #         height = 1920
+    #     case 3:
+    #         width = 2276
+    #         height = 1518
     try:
         video_path = await cm.createPlayer(Player(user.id, unique_id, template))
 
-        await query.message.answer_video(
-            video=BufferedInputFile(open(video_path, 'rb').read(), filename='player for you'),
-            caption=messages.player_done(lang)
-        )
+        # await query.message.answer_video(
+        #     video=BufferedInputFile(open(video_path, 'rb').read(), filename='player for you'),
+        #     caption=messages.player_done(lang), reply_markup=keyboards_core.go_back(lang),
+        #     width=width, height=height, supports_streaming=True
+        # )
+        await query.message.answer_document(document=BufferedInputFile(open(video_path, 'rb').read(), filename='player for you.mp4'), filename='player for you.mp4', disable_content_type_detection=True)
+        await query.message.answer(messages.back_or_player(lang), reply_markup=keyboards.go_back_or_make(lang, unique_id))
     except Exception as e:
         print(e)
-        if 'VOICE_MESSAGES_FORBIDDEN' in e:
+        if 'VOICE_MESSAGES_FORBIDDEN' in str(e):
             await query.message.answer(messages_core.voice_forbidden(lang))
         else:
             await query.message.answer(messages_core.error(lang))

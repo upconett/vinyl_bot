@@ -20,6 +20,7 @@ from keyboards import admin as keyboards
  
 router = Router(name='admin')
 router.message.filter(AllowedUsers())
+router.callback_query.filter(AllowedUsers())
 router.message.middleware(MediaGroupMiddleware())
 
 class AnnounceStates(StatesGroup):

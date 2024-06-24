@@ -1,17 +1,13 @@
-from PIL import Image, ImageChops
+from PIL import Image
 import numpy as np
-
-
 
 def open_image(image_path):
     return Image.open(image_path)
 
 def bend_photo(img, coeff_depth, coeff_curvature):
     '''Делаем изгибы'''
-
     width, height = img.size
 
-    print(width, height)
     # Создание массива для искривленного изображения
     data = np.array(img)
 
@@ -47,16 +43,34 @@ def bend_photo(img, coeff_depth, coeff_curvature):
 
 def overlay_mask(image):
     '''Применяем маску'''
-    image = image.resize((1506, 985))
     mask = Image.open('creation/res/mask1.png').convert("L")
+    img_ratio = image.width / image.height
+    mask_ratio = mask.width / mask.height
+
+    if img_ratio > mask_ratio:
+        scale = mask.height / image.height
+        new_width = int(image.width * scale)
+        new_height = mask.height
+    else:
+        scale = mask.width / image.width
+        new_width = mask.width
+        new_height = int(image.height * scale)
+
+    resized_img = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+    if resized_img.width > mask.width or resized_img.height > mask.height:
+        x_left = (resized_img.width - mask.width) // 2
+        y_top = (resized_img.height - mask.height) // 2
+        resized_img = resized_img.crop((x_left, y_top, x_left + mask.width, y_top + mask.height))
+    resized_mask = mask.resize((resized_img.width, resized_img.height), Image.Resampling.LANCZOS)
+    resized_img.putalpha(resized_mask)
     # Применение маски
-    image.putalpha(mask)
-    return image
+    resized_img.putalpha(mask)
+    return resized_img
 
 
 def paste_photo(image):
-    '''Вставляем на поверхность альбома'''
-    background = Image.open('creation/res/main.png').convert('RGBA')
+    '''Вставляем на поверхность альбома методом multiply'''
+    background = Image.open('creation/res/main2.png').convert('RGBA')
     vertical_offset = 951  # Смещение вниз
     horizontal_offset = 64  # Смещение вправо
     width, height = image.size
@@ -80,19 +94,52 @@ def paste_photo(image):
 
             result.putpixel((new_x, new_y), (new_r, new_g, new_b, new_a))
     return result
-def paste_shadow(image):
-    '''Вставляем одну день методом difference'''
+
+
+def paste_shadow_soft(image):
+    '''Вставляем одну день методом soft light'''
     background_image = image
     overlay_image = Image.open('creation/res/soft_light.png')
-    result_image = ImageChops.difference(background_image, overlay_image)
-    return result_image.convert('RGB')
+    width, height = overlay_image.size
+    result = Image.new('RGBA', background_image.size)
+    result.paste(background_image, (0, 0))
 
-def paste_shadow2(image):
-    '''Вставляем вторую тень'''
+    for x in range(width):
+        for y in range(height):
+
+            bp = background_image.getpixel((x, y))
+            op = overlay_image.getpixel((x, y))
+            alpha_factor = op[3] / 255
+
+            # Нормализуем значения RGB до 0-1
+            br, bg, bb, ba = [v / 255 for v in bp]
+            or_, og, ob, _ = [v / 255 for v in op]
+
+            # Применяем формулу soft light
+            new_r = (or_ * br + br ** 2 * (1 - 2 * or_)) if br < 0.5 else (
+                        br ** 0.5 * (2 * or_ - 1) + 2 * br * (1 - or_))
+            new_g = (og * bg + bg ** 2 * (1 - 2 * og)) if bg < 0.5 else (bg ** 0.5 * (2 * og - 1) + 2 * bg * (1 - og))
+            new_b = (ob * bb + bb ** 2 * (1 - 2 * ob)) if bb < 0.5 else (bb ** 0.5 * (2 * ob - 1) + 2 * bb * (1 - ob))
+
+            # Возвращаем значения в диапазон 0-255
+            new_r = int(new_r * 255 * alpha_factor + br * 255 * (1 - alpha_factor))
+            new_g = int(new_g * 255 * alpha_factor + bg * 255 * (1 - alpha_factor))
+            new_b = int(new_b * 255 * alpha_factor + bb * 255 * (1 - alpha_factor))
+
+            result.putpixel((x, y), (new_r, new_g, new_b, int(ba * 255)))
+    return result
+
+
+def paste_shadow(image):
+    '''Вставляем третию тень'''
     background = image
-    overlay = Image.open('creation/res/first_shadow.png')
-    background_width, background_height = background.size
-    overlay_width, overlay_height = overlay.size
-    position = ((background_width - overlay_width) // 2, (background_height - overlay_height) // 2)
-    background.paste(overlay, position, overlay)
-    return background.convert('RGB')
+    overlay = Image.open('creation/res/fix_shadow.png')
+    # Устанавливаем прозрачность для наложенного изображения (80%)
+    alpha = 0.8
+    r, g, b, a = overlay.split()
+    a = a.point(lambda i: i * alpha)
+    overlay = Image.merge("RGBA", (r, g, b, a))
+
+    # Наложение изображений
+    combined = Image.alpha_composite(background, overlay)
+    return combined

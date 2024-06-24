@@ -4,3 +4,7 @@ class NoConfigFile(Exception):
 
 class NoResFolder(Exception):
     pass
+
+
+class NoResFolder(Exception):
+    pass

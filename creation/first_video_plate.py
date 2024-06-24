@@ -1,6 +1,5 @@
 import os
 import subprocess
-import datetime
 def get_video_duration(video_path):
     result = subprocess.run(
         ['ffprobe', '-i', video_path, '-show_entries', 'format=duration', '-v', 'quiet', '-of', 'csv=p=0'],
@@ -9,22 +8,42 @@ def get_video_duration(video_path):
     )
     return float(result.stdout)
 
+def get_audio_duration(audio_path):
+    result = subprocess.run(
+        ['ffprobe', '-i', audio_path, '-show_entries', 'format=duration', '-v', 'quiet', '-of', 'csv=p=0'],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+    duration = float(result.stdout)
+    return int(duration) if duration<60 else 60
 
 def cut_audio(user_id, audio_path, start_time):
     '''Обрезаем аудио до 1 минуты'''
+    duration = get_audio_duration(audio_path)
     command = [
         'ffmpeg',
         '-y',
         '-i', audio_path,
         '-map', '0:a:0',
         '-ss', start_time,
-        '-t', '00:00:59',
+        '-t', '00:01:00',
+        '-acodec', 'libmp3lame',
+        f'creation/audio/{user_id}_audio1m_temp.mp3'
+    ]
+    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    os.remove(audio_path)
+    command = [
+        'ffmpeg',
+        '-y',
+        '-i', f'creation/audio/{user_id}_audio1m_temp.mp3',
+        '-af', f"afade=t=in:st=0:d=5,afade=t=out:st={duration-1.5}:d=1.5",
         '-acodec', 'libmp3lame',
         f'creation/audio/{user_id}_audio1m.mp3'
     ]
     subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    os.remove(audio_path)
+    os.remove(f'creation/audio/{user_id}_audio1m_temp.mp3')
     return f'creation/audio/{user_id}_audio1m.mp3'
+
 
 
 def make_video_with_vinil(user_id, audio_path, speed):
@@ -106,7 +125,7 @@ def crop_video_and_rotate(user_id, video_path, speed):
             '-y',
             '-stream_loop', '-1',
             '-i', f'creation/video/{user_id}_processed_video.mp4',
-            '-t', '59',
+            '-t', '60',
             '-c:v', 'libx264',
             '-b:v', '0',
             '-threads', 'auto',
@@ -121,7 +140,7 @@ def crop_video_and_rotate(user_id, video_path, speed):
         '-y',
         '-i', f'creation/video/{user_id}_processed_video.mp4',
         '-vf', f"rotate=2*PI*t/{speed}",
-        '-t', '59',
+        '-t', '60',
         f'creation/video/{user_id}_rotate_video.mp4'
     ]
     subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -139,8 +158,13 @@ def process_video(user_id, video_path, video_vinil, noise):
         '-i', video_path,
         '-i', 'creation/res/mask3.png',
         '-i', 'creation/res/1top-min.png',
+        '-i', 'creation/res/needle-min.png',  # Добавляем файл с иглой как входное изображение
         '-filter_complex',
-        "[1][2]alphamerge[rotating_masked];[0][rotating_masked]overlay=(W-w)/2:(H-h)/2[bg_with_rotating];[bg_with_rotating][3]overlay=(W-w)/2:(H-h)/2",
+        "[1][2]alphamerge[rotating_masked];"  # Объединяем вращающееся видео с маской
+        "[0][rotating_masked]overlay=(W-w)/2:(H-h)/2[bg_with_rotating];"  # Накладываем вращающееся видео на фон
+        "[bg_with_rotating][3]overlay=(W-w)/2:(H-h)/2[temp];"  # Накладываем верхнее изображение
+        "[4]format=rgba,colorchannelmixer=aa=0.8[needle_with_alpha];"  # Устанавливаем прозрачность иглы в 80%
+        "[temp][needle_with_alpha]overlay=(W-w)/2:(H-h)/2",  # Накладываем иглу на результат
         '-codec:a', 'copy',
         '-shortest',
         f'creation/video/{user_id}_output_video.mp4'

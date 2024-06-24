@@ -3,8 +3,8 @@ from database.models.User import LangTypes
 
 def subscription_rate(lang: LangTypes) -> str:
     match lang:
-        case LangTypes.RU: return 'Выберите тариф'
-        case LangTypes.EN: return 'Choose plan'
+        case LangTypes.RU: return 'Выберите тариф\n\n1 месяц - 250⭐\n6 месяцев -20% - 1200⭐\n12 месяцев -30% - 2100⭐'
+        case LangTypes.EN: return 'Choose plan\n\n1 month - 250⭐\n6 months -20% - 1200⭐\n12 months -30% - 2100⭐'
 
 
 def subscription_already(lang: LangTypes) -> str:

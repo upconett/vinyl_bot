@@ -1,6 +1,5 @@
 import os
 import subprocess
-import datetime
 
 '''Скрипт для создание пластинки №3 НО С ВИДЕО В ЦЕНТРЕ'''
 
@@ -13,37 +12,43 @@ def get_video_duration(video_path):
     )
     return float(result.stdout)
 
-def time_count(func):
-    def wrapper(*args, **kwargs):
-        time_start = datetime.datetime.now()
-        print(f'Запускаю {func}')
-        result = func(*args, **kwargs)
-        print(f'Закончил {func} за {datetime.datetime.now() - time_start}')
-        print('________________________\n')
-        return result
+def get_audio_duration(audio_path):
+    result = subprocess.run(
+        ['ffprobe', '-i', audio_path, '-show_entries', 'format=duration', '-v', 'quiet', '-of', 'csv=p=0'],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+    duration = float(result.stdout)
+    return int(duration) if duration<60 else 60
 
-    return wrapper
-
-
-@time_count
 def cut_audio(user_id, audio_path, start_time):
     '''Обрезаем аудио до 1 минуты'''
+    duration = get_audio_duration(audio_path)
     command = [
         'ffmpeg',
         '-y',
         '-i', audio_path,
         '-map', '0:a:0',
         '-ss', start_time,
-        '-t', '00:00:59',
+        '-t', '00:01:00',
+        '-acodec', 'libmp3lame',
+        f'creation/audio/{user_id}_audio1m_temp.mp3'
+    ]
+    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    os.remove(audio_path)
+    command = [
+        'ffmpeg',
+        '-y',
+        '-i', f'creation/audio/{user_id}_audio1m_temp.mp3',
+        '-af', f"afade=t=in:st=0:d=5,afade=t=out:st={duration-1.5}:d=1.5",
         '-acodec', 'libmp3lame',
         f'creation/audio/{user_id}_audio1m.mp3'
     ]
     subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    os.remove(audio_path)
+    os.remove(f'creation/audio/{user_id}_audio1m_temp.mp3')
     return f'creation/audio/{user_id}_audio1m.mp3'
 
 
-@time_count
 def crop_video(user_id, video_path):
     '''Делаем видео 1 мин и Вырезаем квадрат из видео'''
     duration = get_video_duration(video_path)
@@ -76,7 +81,7 @@ def crop_video(user_id, video_path):
         '-y',
         '-i', video_path,
         '-loop', '1',
-        '-i', 'creation/res/paper_overlay_small.png',
+        '-i', 'creation/res/paper_overlay.png',
         '-i', 'creation/res/light2.png',
         '-filter_complex',
         """
@@ -96,7 +101,7 @@ def crop_video(user_id, video_path):
             '-y',
             '-stream_loop', '-1',
             '-i', f'creation/video/{user_id}_crop_video.mp4',
-            '-t', '59',
+            '-t', '60',
             '-c:v', 'libx264',
             '-b:v', '0',
             '-threads', 'auto',
@@ -109,7 +114,6 @@ def crop_video(user_id, video_path):
     return f'creation/video/{user_id}_crop_video.mp4'
 
 
-@time_count
 def rotate_vinil(user_id, video_path, speed):
     '''Заставляем крутиться'''
 
@@ -131,13 +135,11 @@ def rotate_vinil(user_id, video_path, speed):
     return f'creation/video/{user_id}_rotate_vinil.mp4'
 
 
-@time_count
 def make_video(user_id, video_path, audio_path, noise):
     '''Заворачиваем в видео'''
     command = [
         'ffmpeg',
         '-y',
-        '-loop', '1',
         '-i', 'creation/res/black.png',
         '-i', video_path,
         '-i', 'creation/res/mask.png',
@@ -206,7 +208,8 @@ def make_video(user_id, video_path, audio_path, noise):
         '-i', 'creation/res/put.png',
         '-filter_complex',
         """
-        [0:v][1:v]overlay=x=0:y=0
+        [1:v]format=rgba,colorchannelmixer=aa=0.8[put_with_alpha];
+        [0:v][put_with_alpha]overlay=x=0:y=0
         """,
         '-c:v', 'libx264',
         '-c:a', 'copy',

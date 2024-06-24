@@ -1,3 +1,5 @@
+import os
+
 from aiogram.dispatcher.router import Router
 from aiogram import F
 from aiogram.filters import StateFilter
@@ -36,12 +38,11 @@ async def query_create_album(query: CallbackQuery, state: FSMContext):
     await update_user(user)
     lang = await get_language(user)
     data = await state.get_data()
-
     if not await check_sub_or_free_albums(user):
         await query.answer(messages.no_free_albums(lang), show_alert=True)
         return
 
-    if cm.in_album_queue(user.id):
+    if await cm.in_album_queue(user.id):
         await query.answer(messages.album_query_block(lang), show_alert=True)
         return
 
@@ -72,7 +73,6 @@ async def query_wait_for_template(query: CallbackQuery, state: FSMContext):
     await update_user(user)
     lang = await get_language(user)
     data = await state.get_data()
-
     tmp = int(query.data.replace('create_album_template_', ''))
 
     data['template'] = tmp
@@ -85,7 +85,7 @@ async def query_wait_for_template(query: CallbackQuery, state: FSMContext):
         st = CreationStates.wait_for_first_photo
     
     last_message = await query.message.edit_text(
-        text=text+messages.wait_for_photo(lang),
+        text=text,
         reply_markup=keyboards_core.go_back(lang)
     )
 
@@ -105,7 +105,7 @@ async def message_wait_for_first_photo_doc(message: Message, state: FSMContext):
     lang = await get_language(user)
     data = await state.get_data()
 
-    if not (message.document and 'image' in message.document.mime_type):
+    if not (message.document and 'image' in message.document.mime_type) or message.document.file_size>=10000000:
         await message.answer(
             text=messages.wrong_photo_format(lang)
         )       
@@ -159,10 +159,7 @@ async def message_wait_for_singe_or_second_photo(message: Message, state: FSMCon
     lang = await get_language(user)
     data = await state.get_data()
 
-    if message.document:
-        print('MIME TYPE', message.document.mime_type)
-
-    if not (message.document and 'image' in message.document.mime_type):
+    if not (message.document and 'image' in message.document.mime_type) or message.document.file_size>=10000000:
         await message.answer(
             text=messages.wrong_photo_format(lang)
         )       
@@ -242,12 +239,17 @@ async def query_wait_for_approve(query: CallbackQuery, state: FSMContext):
             await query.answer(messages.no_free_albums(lang), show_alert=True)
             return
 
-    if cm.in_album_queue(user.id):
+    if await cm.in_album_queue(user.id):
         await query.answer(messages.album_query_block(lang), show_alert=True)
         return
 
+    queue, wait = await cm.count_album_queue()
+
+    if data['template'] == 1: wait += 15
+    else: wait += 30
+
     await query.message.edit_text(
-        text=messages.creation_end(lang, 20, 0),
+        text=messages.creation_end(lang, wait, queue),
         reply_markup=keyboards_core.go_back(lang)
     )
 
@@ -258,6 +260,7 @@ async def query_wait_for_approve(query: CallbackQuery, state: FSMContext):
     print('Album creation started')
 
     await bot.download(photos[0], files[0])
+
     if len(photos) > 1:
         await bot.download(photos[1], files[1])
     
@@ -266,16 +269,19 @@ async def query_wait_for_approve(query: CallbackQuery, state: FSMContext):
         await use_free_albums(user)
         unique_id = get_unique_id()
         alb_file = await cm.createAlbum(Album(user.id, unique_id, data['template'], files[0], files[1]))
-        
-        await query.message.answer_photo(
-            photo=BufferedInputFile(file=open(alb_file, 'rb').read(), filename='album for you'),
-            caption=messages.album_ready(lang)
-        )
-
+        print(alb_file)
+        # await query.message.answer_photo(
+        #     photo=BufferedInputFile(file=open(alb_file, 'rb').read(), filename='album for you'),
+        #     caption=messages.album_ready(lang), reply_markup=keyboards_core.go_back(lang)
+        # )
+        await query.message.answer_document(BufferedInputFile(file=open(alb_file, 'rb').read(), filename='album for you.png'),
+                                            reply_markup=keyboards_core.go_back(lang), disable_content_type_detection=True)
+        print(alb_file)
+        os.remove((alb_file))
     except Exception as e:
         print(e)
         await add_free_albums(user)
-        if 'VOICE_MESSAGES_FORBIDDEN' in e.__str__():
+        if 'VOICE_MESSAGES_FORBIDDEN' in str(e):
             await query.message.answer(messages_core.voice_forbidden(lang))
         else:
             await query.message.answer(messages_core.error(lang))

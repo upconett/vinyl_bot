@@ -1,7 +1,6 @@
 from creation import first_plate
 from creation import second_plate
 from creation import third_plate
-import datetime
 
 ''''Модуль для классических пластинок (с фотками)
 video - туда сохраняются готовые видосы
@@ -10,20 +9,6 @@ audio - там все аудио
 img - там фотки
 '''
 
-
-def time_count(func):
-    def wrapper(*args, **kwargs):
-        time_start = datetime.datetime.now()
-        print(f'Запускаю {func}')
-        result = func(*args, **kwargs)
-        print(f'Закончил {func} за {datetime.datetime.now() - time_start}')
-        print('________________________\n')
-        return result
-
-    return wrapper
-
-
-@time_count
 def make_first_plate_vinil(user_id, photo_path, audio_path, start_time, speed, noise):
     '''Запускаем эту функцию для создания видео первой пластинки
     user_id: id пользователя(создаем подпапки с этим id, чтобы ориентироваться какой файл какому юзеру принадлежат),
@@ -37,8 +22,6 @@ def make_first_plate_vinil(user_id, photo_path, audio_path, start_time, speed, n
     video = first_plate.cut_image(user_id, photo_path, rotate_vinil, speed, noise)
     return video
 
-
-@time_count
 def make_second_plate_vinil(user_id, photo_path, audio_path, start_time, speed, noise):
     '''Запускаем эту функцию для создания видео второй пластинки
         user_id: id пользователя(создаем подпапки с этим id, чтобы ориентироваться какой файл какому юзеру принадлежат),
@@ -52,8 +35,6 @@ def make_second_plate_vinil(user_id, photo_path, audio_path, start_time, speed, 
     video = second_plate.make_video(user_id, rotate_vinil, noise)
     return video
 
-
-@time_count
 def make_third_plate_vinil(user_id, photo_path, audio_path, start_time, speed, noise):
     '''Запускаем эту функцию для создания видео третей пластинки пластинки
         user_id: id пользователя(создаем подпапки с этим id, чтобы ориентироваться какой файл какому юзеру принадлежат),

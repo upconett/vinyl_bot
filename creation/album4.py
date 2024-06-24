@@ -1,4 +1,4 @@
-from PIL import Image, ImageChops
+from PIL import Image
 import numpy as np
 
 
@@ -44,22 +44,32 @@ def bend_photo(img, coeff_depth, coeff_curvature):
     return result_img
 
 
-def overlay_mask_right(image):
+def overlay_mask(image):
     '''Применяем маску для левого фото'''
-    image = image.resize((540, 700))
     mask = Image.open('creation/res/mask6.png').convert("L")
-    # Применение маски
-    image.putalpha(mask)
-    return image
+    img_ratio = image.width / image.height
+    mask_ratio = mask.width / mask.height
 
+    if img_ratio > mask_ratio:
+        scale = mask.height / image.height
+        new_width = int(image.width * scale)
+        new_height = mask.height
+    else:
+        scale = mask.width / image.width
+        new_width = mask.width
+        new_height = int(image.height * scale)
 
-def overlay_mask_left(image):
-    '''Применяем маску для левого фото'''
-    image = image.resize((540, 700))
-    mask = Image.open('creation/res/mask6.png').convert("L")
+    resized_img = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+    if resized_img.width > mask.width or resized_img.height > mask.height:
+        x_left = (resized_img.width - mask.width) // 2
+        y_top = (resized_img.height - mask.height) // 2
+        resized_img = resized_img.crop((x_left, y_top, x_left + mask.width, y_top + mask.height))
+    resized_mask = mask.resize((resized_img.width, resized_img.height), Image.Resampling.LANCZOS)
+    resized_img.putalpha(resized_mask)
     # Применение маски
-    image.putalpha(mask)
-    return image
+    resized_img.putalpha(mask)
+    return resized_img
+
 
 
 def paste_photo(image, background, vertical_offset, horizontal_offset):
@@ -87,27 +97,46 @@ def paste_photo(image, background, vertical_offset, horizontal_offset):
     return result
 
 
-def paste_shadow(image):
-    '''Вставляем одну день методом difference'''
-    background_image = image.convert('RGBA')
+def paste_shadow_soft(image):
+    '''Вставляем одну день методом soft light'''
+    background_image = image
     overlay_image = Image.open('creation/res/soft_light.png')
+    width, height = overlay_image.size
+    result = Image.new('RGBA', background_image.size)
+    result.paste(background_image, (0, 0))
 
-    arr1 = np.array(background_image)
-    arr2 = np.array(overlay_image)
-    difference = np.abs(arr1 - arr2)
+    for x in range(width):
+        for y in range(height):
 
-    # Преобразование результата обратно в объект изображения PIL
-    result_image = Image.fromarray(difference, 'RGBA')
+            bp = background_image.getpixel((x, y))
+            op = overlay_image.getpixel((x, y))
+            alpha_factor = op[3] / 255
 
-    return result_image
+            # Нормализуем значения RGB до 0-1
+            br, bg, bb, ba = [v / 255 for v in bp]
+            or_, og, ob, _ = [v / 255 for v in op]
+
+            # Применяем формулу soft light
+            new_r = (or_ * br + br ** 2 * (1 - 2 * or_)) if br < 0.5 else (
+                        br ** 0.5 * (2 * or_ - 1) + 2 * br * (1 - or_))
+            new_g = (og * bg + bg ** 2 * (1 - 2 * og)) if bg < 0.5 else (bg ** 0.5 * (2 * og - 1) + 2 * bg * (1 - og))
+            new_b = (ob * bb + bb ** 2 * (1 - 2 * ob)) if bb < 0.5 else (bb ** 0.5 * (2 * ob - 1) + 2 * bb * (1 - ob))
+
+            # Возвращаем значения в диапазон 0-255
+            new_r = int(new_r * 255 * alpha_factor + br * 255 * (1 - alpha_factor))
+            new_g = int(new_g * 255 * alpha_factor + bg * 255 * (1 - alpha_factor))
+            new_b = int(new_b * 255 * alpha_factor + bb * 255 * (1 - alpha_factor))
+
+            result.putpixel((x, y), (new_r, new_g, new_b, int(ba * 255)))
+    return result.convert('RGB')
 
 
 def paste_shadow3(image):
-    '''Вставляем третьюс тень'''
+    '''Вставляем третью тень'''
     background = image
     overlay = Image.open('creation/res/first_shadow.png')
     background_width, background_height = background.size
     overlay_width, overlay_height = overlay.size
     position = ((background_width - overlay_width) // 2, (background_height - overlay_height) // 2)
     background.paste(overlay, position, overlay)
-    return background.convert('RGB')
+    return background

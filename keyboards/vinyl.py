@@ -10,8 +10,27 @@ def create_vinyl(lang: LangTypes) -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardBuilder()
     keyboard.button(text=text, callback_data='start')
     return keyboard.as_markup()
+from aiogram.types import InlineKeyboardMarkup
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+
+from database.models.User import LangTypes
+
+def create_vinyl(lang: LangTypes) -> InlineKeyboardMarkup:
+    match lang:
+        case LangTypes.RU: text = 'Назад'
+        case LangTypes.EN: text = 'Back'
+    keyboard = InlineKeyboardBuilder()
+    keyboard.button(text=text, callback_data='start')
+    return keyboard.as_markup()
 
 
+def create_vinyl_template(lang: LangTypes) -> InlineKeyboardMarkup:
+    match lang:
+        case LangTypes.RU: text = 'Назад'
+        case LangTypes.EN: text = 'Back'
+    keyboard = InlineKeyboardBuilder()
+    for x in range(1, 4):
+        keyboard.button(
 def create_vinyl_template(lang: LangTypes) -> InlineKeyboardMarkup:
     match lang:
         case LangTypes.RU: text = 'Назад'
@@ -75,10 +94,16 @@ def create_vinyl_approve(lang: LangTypes) -> InlineKeyboardMarkup:
 
 def get_player(lang: LangTypes, unique_id: int) -> InlineKeyboardMarkup:
     match lang:
-        case LangTypes.RU: text = 'Скачать 💽'
-        case LangTypes.EN: text = 'Download 💽'
+        case LangTypes.RU:
+            text1 = 'Скачать 💽'
+            text2 = 'Вернуться'
+        case LangTypes.EN:
+            text1 = 'Download 💽'
+            text2 = 'Go back'
     keyboard = InlineKeyboardBuilder()
-    keyboard.button(text=text, callback_data=fr'get_player_{unique_id}')
+    keyboard.button(text=text1, callback_data=fr'get_player_{unique_id}')
+    keyboard.button(text=text2, callback_data='start')
+    keyboard.adjust(1, repeat=True)
     return keyboard.as_markup()
 
 
@@ -89,4 +114,18 @@ def player_types(unique_id: int) -> InlineKeyboardMarkup:
             text=f'{x}', 
             callback_data=f'player_template_{unique_id}_{x}'
         ) 
+    return keyboard.as_markup()
+
+def go_back_or_make(lang: LangTypes, unique_id: int) -> InlineKeyboardMarkup:
+    match lang:
+        case LangTypes.RU:
+            text1 = 'Вернуться'
+            text2 = 'Скачать еще💽'
+        case LangTypes.EN:
+            text1 = 'Go back'
+            text2 = 'Download more💽'
+    keyboard = InlineKeyboardBuilder()
+    keyboard.button(text=text2, callback_data=fr'get_player_{unique_id}')
+    keyboard.button(text=text1, callback_data='start')
+    keyboard.adjust(1, repeat=True)
     return keyboard.as_markup()
